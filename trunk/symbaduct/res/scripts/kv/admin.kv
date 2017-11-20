@@ -26,11 +26,6 @@ BoxLayout:
             on_press: app.send_mod_config()
     AccordionAdmin:
         orientation: 'vertical'
-    #    AccordionItem:
-    #        title: 'Info'
-    #        Label:
-    #            id: info_label
-    #            text: 'Experiment: bla bla bla  Group: bli blo blu'
         AccordionItemSection:
             id: options_accordion
             title: 'options'
@@ -89,35 +84,6 @@ BoxLayout:
             ScrollViewSection:
                 GridLayoutSection:
                     id: performance_criteria
-
-        AccordionItemSection:
-            id: game_points_accordion
-            title: 'game points'
-            ScrollViewSection:
-                GridLayoutSection:
-                    id: game_points
-
-        AccordionItemSection:
-            id: valid_colors_accordion
-            title: 'valid colors'
-            ScrollViewSection:
-                GridLayoutSection:
-                    id: valid_colors
-
-        AccordionItemSection:
-            id: valid_shapes_accordion
-            title: 'valid shapes'
-            ScrollViewSection:
-                GridLayoutSection:
-                    id: valid_shapes
-
-        AccordionItemSection:
-            id: valid_sizes_accordion
-            title: 'valid sizes'
-            ScrollViewSection:
-                GridLayoutSection:
-                    id: valid_sizes
-
 
 
 <ScrollViewSection@ScrollView>:

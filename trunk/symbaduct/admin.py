@@ -2,11 +2,12 @@
 # -*- coding: UTF-8 -*-
 
 '''
-Lineages
+symbaduct
 
 Admin
 '''
 
+# symbaduct admin
 # Copyright (c) 2017 Thomas Anatol da Rocha Woelz
 # All rights reserved.
 # BSD type license: check doc folder for details
@@ -496,23 +497,14 @@ class AdminApp(App):
         self.sections = OrderedDict()
         self.sections['main'] = self.root.ids.main
         self.sections['save'] = self.root.ids.save
-        self.sections['save'] = self.root.ids.save
         self.sections['end_criteria'] = self.root.ids.end_criteria
         self.sections['performance_criteria'] = self.root.ids.performance_criteria
-        self.sections['game_points'] = self.root.ids.game_points
-        self.sections['valid_colors'] = self.root.ids.valid_colors
-        self.sections['valid_shapes'] = self.root.ids.valid_shapes
-        self.sections['valid_sizes'] = self.root.ids.valid_sizes
 
         self.accordion_sections = OrderedDict()
         self.accordion_sections['main'] = self.root.ids.main_accordion
         self.accordion_sections['save'] = self.root.ids.save_accordion
         self.accordion_sections['end_criteria'] = self.root.ids.end_criteria_accordion
         self.accordion_sections['performance_criteria'] = self.root.ids.performance_criteria_accordion
-        self.accordion_sections['game_points'] = self.root.ids.game_points_accordion
-        self.accordion_sections['valid_colors'] = self.root.ids.valid_colors_accordion
-        self.accordion_sections['valid_shapes'] = self.root.ids.valid_colors_accordion
-        self.accordion_sections['valid_sizes'] = self.root.ids.valid_colors_accordion
 
         cfg.mod = {}
 

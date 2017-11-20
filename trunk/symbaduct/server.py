@@ -271,134 +271,134 @@ class Protocol(amp.AMP):
 
     # MAIN actions
 
-    @cmd.SetButtonHover.responder
-    def set_button_hover(self, button, forced):
-        print 'got to set button hover responder. forced =', forced
-        fac.set_time()
-        for p in fac.get_players_and_observer():
-            p.callRemote(cmd.SetButtonHovered,
-                         button=button,
-                         forced=forced).addErrback(bailout)
-        if not forced:
-            fac.record_set_button_hover(button, self.client_count)
-        return {}
-
-    @cmd.SetButtonHoverLeave.responder
-    def set_button_hover_leave(self, button, forced):
-        fac.set_time()
-        for p in fac.get_players_and_observer():
-            p.callRemote(cmd.SetButtonHoverLeft,
-                         button=button,
-                         forced=forced).addErrback(bailout)
-        return {}
-
-    @cmd.SetButtonPress.responder
-    def set_button_press(self, button):
-        fac.set_time()
-        for p in fac.get_players_and_observer():
-            p.callRemote(cmd.SetButtonPressed,
-                         button=button).addErrback(bailout)
-        fac.record_set_button_press(button, self.client_count)
-        return {}
-
-    @cmd.ColorButtonHover.responder
-    def color_button_hover(self, button, forced):
-        fac.set_time()
-        for p in fac.get_players_and_observer():
-            p.callRemote(cmd.ColorButtonHovered,
-                         button=button,
-                         forced=forced).addErrback(bailout)
-        if not forced:
-            fac.record_color_button_hover(button, self.client_count)
-        return {}
-
-    @cmd.ColorButtonHoverLeave.responder
-    def color_button_hover_leave(self, button, forced):
-        fac.set_time()
-        for p in fac.get_players_and_observer():
-            p.callRemote(cmd.ColorButtonHoverLeft,
-                         button=button,
-                         forced=forced).addErrback(bailout)
-        return {}
-
-    @cmd.ColorButtonPress.responder
-    def color_button_press(self, button):
-        fac.set_time()
-        for p in fac.get_players_and_observer():
-            p.callRemote(cmd.ColorButtonPressed,
-                         button=button).addErrback(bailout)
-        fac.record_color_button_press(button, self.client_count)
-        return {}
-
-
-    @cmd.SizeButtonHover.responder
-    def size_button_hover(self, button, forced):
-        fac.set_time()
-        for p in fac.get_players_and_observer():
-            p.callRemote(cmd.SizeButtonHovered,
-                         button=button,
-                         forced=forced).addErrback(bailout)
-        if not forced:
-            fac.record_size_button_hover(button, self.client_count)
-        return {}
-
-    @cmd.SizeButtonHoverLeave.responder
-    def size_button_hover_leave(self, button, forced):
-        fac.set_time()
-        for p in fac.get_players_and_observer():
-            p.callRemote(cmd.SizeButtonHoverLeft,
-                         button=button,
-                         forced=forced).addErrback(bailout)
-        return {}
-
-    @cmd.SizeButtonPress.responder
-    def color_button_press(self, button):
-        fac.set_time()
-        for p in fac.get_players_and_observer():
-            p.callRemote(cmd.SizeButtonPressed,
-                         button=button).addErrback(bailout)
-        fac.record_size_button_press(button, self.client_count)
-        return {}
-
-
-    @cmd.ShapeButtonHover.responder
-    def shape_button_hover(self, button, forced):
-        fac.set_time()
-        for p in fac.get_players_and_observer():
-            p.callRemote(cmd.ShapeButtonHovered,
-                         button=button,
-                         forced=forced).addErrback(bailout)
-        if not forced:
-            fac.record_shape_button_hover(button, self.client_count)
-        return {}
-
-    @cmd.ShapeButtonHoverLeave.responder
-    def shape_button_hover_leave(self, button, forced):
-        fac.set_time()
-        for p in fac.get_players_and_observer():
-            p.callRemote(cmd.ShapeButtonHoverLeft,
-                         button=button,
-                         forced=forced).addErrback(bailout)
-        return {}
-
-    @cmd.ShapeButtonPress.responder
-    def color_button_press(self, button):
-        fac.set_time()
-        for p in fac.get_players_and_observer():
-            p.callRemote(cmd.ShapeButtonPressed,
-                         button=button).addErrback(bailout)
-        fac.record_shape_button_press(button, self.client_count)
-        return {}
-
-    @cmd.CompositeButtonPress.responder
-    def composite_button_press(self):
-        fac.set_time()
-        for p in fac.get_players_and_observer():
-            p.callRemote(cmd.CompositeButtonPressed).addErrback(bailout)
-        # TODO: check stability, and schedule next choice
-        fac.choice_made(self.client_count)
-
-        return {}
+    # @cmd.SetButtonHover.responder
+    # def set_button_hover(self, button, forced):
+    #     print 'got to set button hover responder. forced =', forced
+    #     fac.set_time()
+    #     for p in fac.get_players_and_observer():
+    #         p.callRemote(cmd.SetButtonHovered,
+    #                      button=button,
+    #                      forced=forced).addErrback(bailout)
+    #     if not forced:
+    #         fac.record_set_button_hover(button, self.client_count)
+    #     return {}
+    #
+    # @cmd.SetButtonHoverLeave.responder
+    # def set_button_hover_leave(self, button, forced):
+    #     fac.set_time()
+    #     for p in fac.get_players_and_observer():
+    #         p.callRemote(cmd.SetButtonHoverLeft,
+    #                      button=button,
+    #                      forced=forced).addErrback(bailout)
+    #     return {}
+    #
+    # @cmd.SetButtonPress.responder
+    # def set_button_press(self, button):
+    #     fac.set_time()
+    #     for p in fac.get_players_and_observer():
+    #         p.callRemote(cmd.SetButtonPressed,
+    #                      button=button).addErrback(bailout)
+    #     fac.record_set_button_press(button, self.client_count)
+    #     return {}
+    #
+    # @cmd.ColorButtonHover.responder
+    # def color_button_hover(self, button, forced):
+    #     fac.set_time()
+    #     for p in fac.get_players_and_observer():
+    #         p.callRemote(cmd.ColorButtonHovered,
+    #                      button=button,
+    #                      forced=forced).addErrback(bailout)
+    #     if not forced:
+    #         fac.record_color_button_hover(button, self.client_count)
+    #     return {}
+    #
+    # @cmd.ColorButtonHoverLeave.responder
+    # def color_button_hover_leave(self, button, forced):
+    #     fac.set_time()
+    #     for p in fac.get_players_and_observer():
+    #         p.callRemote(cmd.ColorButtonHoverLeft,
+    #                      button=button,
+    #                      forced=forced).addErrback(bailout)
+    #     return {}
+    #
+    # @cmd.ColorButtonPress.responder
+    # def color_button_press(self, button):
+    #     fac.set_time()
+    #     for p in fac.get_players_and_observer():
+    #         p.callRemote(cmd.ColorButtonPressed,
+    #                      button=button).addErrback(bailout)
+    #     fac.record_color_button_press(button, self.client_count)
+    #     return {}
+    #
+    #
+    # @cmd.SizeButtonHover.responder
+    # def size_button_hover(self, button, forced):
+    #     fac.set_time()
+    #     for p in fac.get_players_and_observer():
+    #         p.callRemote(cmd.SizeButtonHovered,
+    #                      button=button,
+    #                      forced=forced).addErrback(bailout)
+    #     if not forced:
+    #         fac.record_size_button_hover(button, self.client_count)
+    #     return {}
+    #
+    # @cmd.SizeButtonHoverLeave.responder
+    # def size_button_hover_leave(self, button, forced):
+    #     fac.set_time()
+    #     for p in fac.get_players_and_observer():
+    #         p.callRemote(cmd.SizeButtonHoverLeft,
+    #                      button=button,
+    #                      forced=forced).addErrback(bailout)
+    #     return {}
+    #
+    # @cmd.SizeButtonPress.responder
+    # def color_button_press(self, button):
+    #     fac.set_time()
+    #     for p in fac.get_players_and_observer():
+    #         p.callRemote(cmd.SizeButtonPressed,
+    #                      button=button).addErrback(bailout)
+    #     fac.record_size_button_press(button, self.client_count)
+    #     return {}
+    #
+    #
+    # @cmd.ShapeButtonHover.responder
+    # def shape_button_hover(self, button, forced):
+    #     fac.set_time()
+    #     for p in fac.get_players_and_observer():
+    #         p.callRemote(cmd.ShapeButtonHovered,
+    #                      button=button,
+    #                      forced=forced).addErrback(bailout)
+    #     if not forced:
+    #         fac.record_shape_button_hover(button, self.client_count)
+    #     return {}
+    #
+    # @cmd.ShapeButtonHoverLeave.responder
+    # def shape_button_hover_leave(self, button, forced):
+    #     fac.set_time()
+    #     for p in fac.get_players_and_observer():
+    #         p.callRemote(cmd.ShapeButtonHoverLeft,
+    #                      button=button,
+    #                      forced=forced).addErrback(bailout)
+    #     return {}
+    #
+    # @cmd.ShapeButtonPress.responder
+    # def color_button_press(self, button):
+    #     fac.set_time()
+    #     for p in fac.get_players_and_observer():
+    #         p.callRemote(cmd.ShapeButtonPressed,
+    #                      button=button).addErrback(bailout)
+    #     fac.record_shape_button_press(button, self.client_count)
+    #     return {}
+    #
+    # @cmd.CompositeButtonPress.responder
+    # def composite_button_press(self):
+    #     fac.set_time()
+    #     for p in fac.get_players_and_observer():
+    #         p.callRemote(cmd.CompositeButtonPressed).addErrback(bailout)
+    #     # TODO: check stability, and schedule next choice
+    #     fac.choice_made(self.client_count)
+    #
+    #     return {}
 
 class SymbaductFactory(Factory):
     '''A factory that creates and holds data and protocol instances.'''
@@ -421,17 +421,17 @@ class SymbaductFactory(Factory):
         self.delay_calls = {}
 
         # experiment variables
-        self.active_set = 'color'
-        self.active_color = 1
-        self.active_shape = 1
-        self.active_size = 1
-        self.n_correct = 0
-        self.points = 0
-        self.total_points = 0
-
-        self.reset_color = self.active_color
-        self.reset_shape = self.active_shape
-        self.reset_size = self.active_size
+        # self.active_set = 'color'
+        # self.active_color = 1
+        # self.active_shape = 1
+        # self.active_size = 1
+        # self.n_correct = 0
+        # self.points = 0
+        # self.total_points = 0
+        #
+        # self.reset_color = self.active_color
+        # self.reset_shape = self.active_shape
+        # self.reset_size = self.active_size
 
         # time variables
         self.hour = '-'.join([str(x) for x in time.localtime()[:4]])
@@ -442,16 +442,16 @@ class SymbaductFactory(Factory):
         self.previous_event = self.event
         self.time_press = 0
         self.time_previous_press = 0
-        self.time_start_choice = 0
-        self.time_choice = 0
+        # self.time_start_choice = 0
+        # self.time_choice = 0
 
         # end variables
         self.end = False
         self.end_reason = ''
 
         # observer variables
-        self.percent_correct = 0.0
-        self.consec_correct = 0
+        # self.percent_correct = 0.0
+        # self.consec_correct = 0
 
         # to be defined @ create output
         self.output_path = ''
@@ -499,12 +499,8 @@ class SymbaductFactory(Factory):
              u't_start',
              't_response',
              u'latency',
-             'color',
-             'shape',
-             'size',
-             'n_correct',
-             'points',
-             'total']
+             'ref_points',
+             'target_points']
 
         data_string = ';'.join([unicode(x) for x in l]) + u'\n'
         output_file.write(data_string)
@@ -519,12 +515,8 @@ class SymbaductFactory(Factory):
             t_start='',
             t_response='',
             latency='',
-            color='',
-            shape='',
-            size='',
-            n_correct='',
-            points='',
-            total='')
+            ref_points='',
+            target_points='')
 
         data = dict(self.line,
                     event=u'start server',
@@ -545,12 +537,8 @@ class SymbaductFactory(Factory):
             d['t_start'],
             d['t_response'],
             d['latency'],
-            d['color'],
-            d['shape'],
-            d['size'],
-            d['n_correct'],
-            d['points'],
-            d['total']]
+            d['ref_points'],
+            d['target_points']]
 
         data_string = ';'.join([unicode(x) for x in d_list]) + u'\n'
 
@@ -605,324 +593,163 @@ class SymbaductFactory(Factory):
 
         print 'mod', mod
 
-    def record_set_button_hover(self, button, player):
-        print 'got to record set button hover'
-        data = dict(self.line,
-                    event='set button hover',
-                    hour=self.hour,
-                    description='hover',
-                    cycle=cfg.exp['save']['cycle'] + 1,
-                    player=player + 1,
-                    response=button,
-                    t_start=n_uni(self.previous_event),
-                    t_response=n_uni(self.event),
-                    latency=n_uni(self.event - self.previous_event),
-                    )
-        self.record_line(**data)
-        print data
-
-    def record_color_button_hover(self, button, player):
-        print 'got to record color button hover'
-        data = dict(self.line,
-                    event='color button hover',
-                    hour=self.hour,
-                    description='hover',
-                    cycle=cfg.exp['save']['cycle'] + 1,
-                    player=player + 1,
-                    response=button,
-                    t_start=n_uni(self.previous_event),
-                    t_response=n_uni(self.event),
-                    latency=n_uni(self.event - self.previous_event),
-                    color=button
-                    )
-        self.record_line(**data)
-        print data
-
-    def record_shape_button_hover(self, button, player):
-        print 'got to record shape button hover'
-        data = dict(self.line,
-                    event='shape button hover',
-                    hour=self.hour,
-                    description='hover',
-                    cycle=cfg.exp['save']['cycle'] + 1,
-                    player=player + 1,
-                    response=button,
-                    t_start=n_uni(self.previous_event),
-                    t_response=n_uni(self.event),
-                    latency=n_uni(self.event - self.previous_event),
-                    shape=button
-                    )
-        self.record_line(**data)
-        print data
-
-    def record_size_button_hover(self, button, player):
-        print 'got to record size button hover'
-        data = dict(self.line,
-                    event='size button hover',
-                    hour=self.hour,
-                    description='hover',
-                    cycle=cfg.exp['save']['cycle'] + 1,
-                    player=player + 1,
-                    response=button,
-                    t_start=n_uni(self.previous_event),
-                    t_response=n_uni(self.event),
-                    latency=n_uni(self.event - self.previous_event),
-                    size=button
-                    )
-        self.record_line(**data)
-        print data
+    # def record_set_button_hover(self, button, player):
+    #     print 'got to record set button hover'
+    #     data = dict(self.line,
+    #                 event='set button hover',
+    #                 hour=self.hour,
+    #                 description='hover',
+    #                 cycle=cfg.exp['save']['cycle'] + 1,
+    #                 player=player + 1,
+    #                 response=button,
+    #                 t_start=n_uni(self.previous_event),
+    #                 t_response=n_uni(self.event),
+    #                 latency=n_uni(self.event - self.previous_event),
+    #                 )
+    #     self.record_line(**data)
+    #     print data
 
     def set_time_press(self):
         self.time_previous_press = self.time_press
         self.time_press = self.now
 
-    def record_set_button_press(self, button, player):
-        print 'got to record set button press'
-        self.set_time_press()
-        self.active_set = button
-        data = dict(self.line,
-                    event='set button press',
-                    hour=self.hour,
-                    description='press',
-                    cycle=cfg.exp['save']['cycle'] + 1,
-                    player=player + 1,
-                    response=button,
-                    t_start=n_uni(self.time_previous_press),
-                    t_response=n_uni(self.time_press),
-                    latency=n_uni(self.time_press - self.time_previous_press)
-                    )
-        self.record_line(**data)
-        print data
+    #
+    # def record_choice(self, player): #CHOICE
+    #     print 'got to record choice'
+    #     self.set_time_press()
+    #     self.time_start_choice = self.time_choice
+    #     self.time_choice = self.now
+    #     data = dict(self.line,
+    #                 event='choice',
+    #                 hour=self.hour,
+    #                 description='composite press',
+    #                 cycle=cfg.exp['save']['cycle'] + 1,
+    #                 player=player + 1,
+    #                 t_start=n_uni(self.time_start_choice),
+    #                 t_response=n_uni(self.time_choice),
+    #                 latency=n_uni(self.time_choice - self.time_start_choice),
+    #                 color=self.active_color,
+    #                 shape=self.active_shape,
+    #                 size=self.active_size,
+    #                 n_correct=self.n_correct,
+    #                 points=self.points,
+    #                 total=self.total_points,
+    #                 )
+    #     self.record_line(**data)
+    #     print data
 
-    def record_color_button_press(self, button, player):
-        print 'got to record color button press'
-        self.set_time_press()
-        self.active_color = button
-        data = dict(self.line,
-                    event='color button press',
-                    hour=self.hour,
-                    description='press',
-                    cycle=cfg.exp['save']['cycle'] + 1,
-                    player=player + 1,
-                    response=button,
-                    t_start=n_uni(self.time_previous_press),
-                    t_response=n_uni(self.time_press),
-                    latency=n_uni(self.time_press - self.time_previous_press),
-                    color=button
-                    )
-        self.record_line(**data)
-        print data
+    # def record_start_choice(self): #CHOICE
+    #     print 'got to record choice'
+    #     data = dict(self.line,
+    #                 event='start choice',
+    #                 hour=self.hour,
+    #                 description='',
+    #                 cycle=cfg.exp['save']['cycle'] + 1,
+    #                 t_start=n_uni(self.now),
+    #                 color=self.active_color,
+    #                 shape=self.active_shape,
+    #                 size=self.active_size,
+    #                 total=self.total_points,
+    #                 )
+    #     self.record_line(**data)
+    #     print data
 
-    def record_shape_button_press(self, button, player):
-        print 'got to record shape button press'
-        self.set_time_press()
-        self.active_shape = button
-        data = dict(self.line,
-                    event='shape button press',
-                    hour=self.hour,
-                    description='press',
-                    cycle=cfg.exp['save']['cycle'] + 1,
-                    player=player + 1,
-                    response=button,
-                    t_start=n_uni(self.time_previous_press),
-                    t_response=n_uni(self.time_press),
-                    latency=n_uni(self.time_press - self.time_previous_press),
-                    shape=button
-                    )
-        self.record_line(**data)
-        print data
-
-    def record_size_button_press(self, button, player):
-        print 'got to record size button press'
-        self.set_time_press()
-        self.active_size = button
-        data = dict(self.line,
-                    event='size button press',
-                    hour=self.hour,
-                    description='press',
-                    cycle=cfg.exp['save']['cycle'] + 1,
-                    player=player + 1,
-                    response=button,
-                    t_start=n_uni(self.time_previous_press),
-                    t_response=n_uni(self.time_press),
-                    latency=n_uni(self.time_press - self.time_previous_press),
-                    size=button
-                    )
-        self.record_line(**data)
-        print data
-
-    def record_choice(self, player): #CHOICE
-        print 'got to record choice'
-        self.set_time_press()
-        self.time_start_choice = self.time_choice
-        self.time_choice = self.now
-        data = dict(self.line,
-                    event='choice',
-                    hour=self.hour,
-                    description='composite press',
-                    cycle=cfg.exp['save']['cycle'] + 1,
-                    player=player + 1,
-                    t_start=n_uni(self.time_start_choice),
-                    t_response=n_uni(self.time_choice),
-                    latency=n_uni(self.time_choice - self.time_start_choice),
-                    color=self.active_color,
-                    shape=self.active_shape,
-                    size=self.active_size,
-                    n_correct=self.n_correct,
-                    points=self.points,
-                    total=self.total_points,
-                    )
-        self.record_line(**data)
-        print data
-
-    def record_start_choice(self): #CHOICE
-        print 'got to record choice'
-        data = dict(self.line,
-                    event='start choice',
-                    hour=self.hour,
-                    description='',
-                    cycle=cfg.exp['save']['cycle'] + 1,
-                    t_start=n_uni(self.now),
-                    color=self.active_color,
-                    shape=self.active_shape,
-                    size=self.active_size,
-                    total=self.total_points,
-                    )
-        self.record_line(**data)
-        print data
+    #
+    # def choice_made(self, player):
+        # self.n_correct = 0
+        # if cfg.exp['valid_colors']['color {}'.format(self.active_color)]:
+        #     self.n_correct += 1
+        # if cfg.exp['valid_shapes']['shape {}'.format(self.active_shape)]:
+        #     self.n_correct += 1
+        # if cfg.exp['valid_sizes']['size {}'.format(self.active_size)]:
+        #     self.n_correct += 1
+        # self.points = cfg.exp['game_points']['{} correct'.format(self.n_correct)]
+        # # self.total_points += self.points
+        #
+        #
+        # self.record_choice(player)
+        # cfg.exp['save']['cycle'] += 1
+        # if self.n_correct >= cfg.exp['performance_criteria']['corrects required']:
+        #     cfg.exp['save']['window results'].append(True)
+        # else:
+        #     cfg.exp['save']['window results'].append(False)
+        # window_size = cfg.exp['performance_criteria']['window size']
+        # cfg.exp['save']['window results'] = cfg.exp['save']['window results'][-1*window_size:]
+        # cfg.exp.write()
+        # self.check_end_criteria()
+        # self.update_observer()
+        # self.update_config()
 
 
-    def choice_made(self, player):
-        self.n_correct = 0
-        if cfg.exp['valid_colors']['color {}'.format(self.active_color)]:
-            self.n_correct += 1
-        if cfg.exp['valid_shapes']['shape {}'.format(self.active_shape)]:
-            self.n_correct += 1
-        if cfg.exp['valid_sizes']['size {}'.format(self.active_size)]:
-            self.n_correct += 1
-        self.points = cfg.exp['game_points']['{} correct'.format(self.n_correct)]
-        self.total_points += self.points
-        self.set_resets()
-        self.start_feedback()
-        self.record_choice(player)
-        cfg.exp['save']['cycle'] += 1
-        if self.n_correct >= cfg.exp['performance_criteria']['corrects required']:
-            cfg.exp['save']['window results'].append(True)
-        else:
-            cfg.exp['save']['window results'].append(False)
-        window_size = cfg.exp['performance_criteria']['window size']
-        cfg.exp['save']['window results'] = cfg.exp['save']['window results'][-1*window_size:]
-        cfg.exp.write()
-        self.check_end_criteria()
-        self.update_observer()
-        self.update_config()
+    # def update_observer(self):
+    #     for p in self.get_observer():
+    #         p.callRemote(cmd.UpdateObserver,
+    #                      cycle=cfg.exp['save']['cycle'],
+    #                      percent_correct=self.percent_correct,
+    #                      consec_correct=self.consec_correct,
+    #                      ).addErrback(bailout)
 
+    # def check_end_criteria(self):
+    #     cri = cfg.exp['end_criteria']
+    #     win = cfg.exp['save']['window results']
+    #     len_win = len(win)
+    #     true_count = win.count(True)
+    #     # self.percent_correct = float(true_count) / len_win
+    #     # self.consec_correct = 0
+    #     for i in win[::-1]:
+    #         if i:
+    #             self.consec_correct += 1
+    #         else:
+    #             break
+    #     cycle = cfg.exp['save']['cycle']
+    #     if cycle < cri['min cycles']:
+    #         return
+    #     if cycle > cri['max cycles']:
+    #         self.end = True
+    #         self.end_reason += '-max cycles'
+    #     if cri['use performance criteria']:
+    #         per = cfg.exp['performance_criteria']
+    #         if len_win < per['window size']:
+    #             return
+    #         if float(true_count) / len_win >= per['percent correct']:
+    #             consec = per['consecutive correct']
+    #             if consec == 0 or win[-1*consec:].count(False) == 0:
+    #                 self.end = True
+    #                 self.end_reason += '-perf criteria'
+    #
+    # def start_feedback(self):
+    #     for p in self.get_players_and_observer():
+    #         p.callRemote(cmd.StartFeedback,
+    #                      points=self.points,
+    #                      total_points=self.total_points,
+    #                      reset_color=self.reset_color,
+    #                      reset_shape=self.reset_shape,
+    #                      reset_size=self.reset_size,
+    #                      ).addErrback(bailout)
+    #     self.delay_calls['change points'] = reactor.callLater(cfg.exp['durations']['delay change points'],
+    #                                                           self.change_points)
+    #     self.delay_calls['restart_choice'] = reactor.callLater(cfg.exp['durations']['feedback'],
+    #                                                            self.restart_choice)
 
-    def set_resets(self):
-        option = cfg.exp['main']['restart choice']
-        if option == 'reset':
-            self.reset_color = cfg.exp['resets']['color']
-            self.reset_shape = cfg.exp['resets']['shape']
-            self.reset_size =cfg.exp['resets']['size']
-        elif option == 'keep':
-            self.reset_color = self.active_color
-            self.reset_shape = self.active_shape
-            self.reset_size = self.active_size
-        elif 'random' in option:
-            valid_colors = [1, 2, 3, 4, 5, 6, 7]
-            valid_shapes = [1, 2, 3, 4, 5, 6, 7]
-            valid_sizes = [1, 2, 3, 4, 5, 6, 7]
-            if option == 'random wrong':
-                for i in xrange(1, 8):
-                    if cfg.exp['valid_colors']['color {}'.format(i)]:
-                        valid_colors.remove(i)
-                    if cfg.exp['valid_shapes']['shape {}'.format(i)]:
-                        valid_shapes.remove(i)
-                    if cfg.exp['valid_sizes']['size {}'.format(i)]:
-                        valid_sizes.remove(i)
-                if not valid_colors:
-                    valid_colors = [1, ]
-                if not valid_shapes:
-                    valid_shapes = [1, ]
-                if not valid_sizes:
-                    valid_sizes = [1, ]
-            self.reset_color = random.choice(valid_colors)
-            self.reset_shape = random.choice(valid_shapes)
-            self.reset_size = random.choice(valid_sizes)
-        elif option == 'random wrong':
-            valid_colors = []
+    # def restart_choice(self):
+    #     if self.end:
+    #         self.end_session(self.end_reason)
+    #         return
+    #     self.set_time()
+    #     self.set_time_press()
+    #     self.time_choice = self.now
+    #     self.active_color = self.reset_color
+    #     self.active_shape = self.reset_shape
+    #     self.active_size = self.reset_size
+    #     self.record_start_choice()
+    #     for p in self.get_players_and_observer():
+    #         p.callRemote(cmd.RestartChoice).addErrback(bailout)
 
 
 
-    def update_observer(self):
-        for p in self.get_observer():
-            p.callRemote(cmd.UpdateObserver,
-                         cycle=cfg.exp['save']['cycle'],
-                         percent_correct=self.percent_correct,
-                         consec_correct=self.consec_correct,
-                         ).addErrback(bailout)
-
-    def check_end_criteria(self):
-        cri = cfg.exp['end_criteria']
-        win = cfg.exp['save']['window results']
-        len_win = len(win)
-        true_count = win.count(True)
-        self.percent_correct = float(true_count) / len_win
-        self.consec_correct = 0
-        for i in win[::-1]:
-            if i:
-                self.consec_correct += 1
-            else:
-                break
-        cycle = cfg.exp['save']['cycle']
-        if cycle < cri['min cycles']:
-            return
-        if cycle > cri['max cycles']:
-            self.end = True
-            self.end_reason += '-max cycles'
-        if cri['use performance criteria']:
-            per = cfg.exp['performance_criteria']
-            if len_win < per['window size']:
-                return
-            if float(true_count) / len_win >= per['percent correct']:
-                consec = per['consecutive correct']
-                if consec == 0 or win[-1*consec:].count(False) == 0:
-                    self.end = True
-                    self.end_reason += '-perf criteria'
-
-    def start_feedback(self):
-        for p in self.get_players_and_observer():
-            p.callRemote(cmd.StartFeedback,
-                         points=self.points,
-                         total_points=self.total_points,
-                         reset_color=self.reset_color,
-                         reset_shape=self.reset_shape,
-                         reset_size=self.reset_size,
-                         ).addErrback(bailout)
-        self.delay_calls['change points'] = reactor.callLater(cfg.exp['durations']['delay change points'],
-                                                              self.change_points)
-        self.delay_calls['restart_choice'] = reactor.callLater(cfg.exp['durations']['feedback'],
-                                                               self.restart_choice)
-
-    def restart_choice(self):
-        if self.end:
-            self.end_session(self.end_reason)
-            return
-        self.set_time()
-        self.set_time_press()
-        self.time_choice = self.now
-        self.active_color = self.reset_color
-        self.active_shape = self.reset_shape
-        self.active_size = self.reset_size
-        self.record_start_choice()
-        for p in self.get_players_and_observer():
-            p.callRemote(cmd.RestartChoice).addErrback(bailout)
-
-
-
-    def change_points(self):
-        for p in self.get_players_and_observer():
-            p.callRemote(cmd.ChangePoints).addErrback(bailout)
+    # def change_points(self):
+    #     for p in self.get_players_and_observer():
+    #         p.callRemote(cmd.ChangePoints).addErrback(bailout)
 
 
     def expire_session(self):
