@@ -1,0 +1,8 @@
+Amptypes is a set of extension types for the AMP protocol.
+Use them if you like them.
+
+Currently there are no setup.py to install it. I suggest you
+just copy it to your project and use it directly.
+
+
+Contact: Henrik Thostrup Jensen <thostrup _AT_ gmail.com>

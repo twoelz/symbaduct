@@ -1,0 +1,51 @@
+
+<SVGLayout>
+
+<MyWidget>:
+    orientation: 'vertical'
+    canvas.before:
+        Color:
+            rgba: 0.8, 0.2, 0.2, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    Button:
+        id: but1
+        width: 10
+        height: 10
+        AnchorLayout:
+            anchor_x: 'center'
+            anchor_y: 'center'
+            pos: self.parent.pos
+            size: self.parent.size
+            id: but1_back
+
+    Button:
+        AnchorLayout:
+            anchor_x: 'center'
+            anchor_y: 'center'
+            pos: self.parent.pos
+            size: self.parent.size
+            id: but2_back
+
+#    GridLayout:
+#        id: grid_conn
+#        cols: 1
+#        spacing: 4
+#        row_default_height: '40dp'
+#        size_hint: 1, None
+#        height: '386dp'
+#
+#        Label:
+#    #        color: 0, 0, 0, 1
+#            id: label_game_message
+#            font_size: '36sp'
+#            halign: 'center'
+#            text: 'GAME ON!!'
+#
+#            canvas.before:
+#                Color:
+#                    rgba: 0.2, 0.2, 0.8, 1
+#                Rectangle:
+#                    pos: self.pos
+#                    size: self.size

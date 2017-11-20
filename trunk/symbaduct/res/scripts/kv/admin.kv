@@ -1,0 +1,135 @@
+BoxLayout:
+    orientation: 'vertical'
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_y: None
+        height: '40dp'
+        Label:
+            id: admin_info
+            text: 'Connecting...'
+    #        size_hint_y: None
+    #        height: '40dp'
+        Button:
+            id: force_update_config
+            text: 'update'
+            size_hint_x: None
+            width: '60dp'
+#            disabled: True
+            on_press: app.force_update_config()
+
+        Button:
+            id: send_mod_config
+            text: 'send'
+            size_hint_x: None
+            width: '50dp'
+            disabled: True
+            on_press: app.send_mod_config()
+    AccordionAdmin:
+        orientation: 'vertical'
+    #    AccordionItem:
+    #        title: 'Info'
+    #        Label:
+    #            id: info_label
+    #            text: 'Experiment: bla bla bla  Group: bli blo blu'
+        AccordionItemSection:
+            id: options_accordion
+            title: 'options'
+            ScrollViewSection:
+                GridLayoutSection:
+                    id: options
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        Label:
+                            text: 'label 1'
+                        Button:
+                            text: 'button 2'
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        Label:
+                            text: 'label 2'
+                        Button:
+                            text: 'button 2'
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        Label:
+                            text: 'label 3'
+                        Button:
+                            text: 'button 2'
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        Label:
+                            text: 'label 4'
+                        Button:
+                            text: 'button 2'
+
+        AccordionItemSection:
+            id: main_accordion
+            title: 'main'
+            ScrollViewSection:
+                GridLayoutSection:
+                    id: main
+
+        AccordionItemSection:
+            id: save_accordion
+            title: 'save'
+            ScrollViewSection:
+                GridLayoutSection:
+                    id: save
+
+        AccordionItemSection:
+            id: end_criteria_accordion
+            title: 'end criteria'
+            ScrollViewSection:
+                GridLayoutSection:
+                    id: end_criteria
+
+        AccordionItemSection:
+            id: performance_criteria_accordion
+            title: 'performance criteria'
+            ScrollViewSection:
+                GridLayoutSection:
+                    id: performance_criteria
+
+        AccordionItemSection:
+            id: game_points_accordion
+            title: 'game points'
+            ScrollViewSection:
+                GridLayoutSection:
+                    id: game_points
+
+        AccordionItemSection:
+            id: valid_colors_accordion
+            title: 'valid colors'
+            ScrollViewSection:
+                GridLayoutSection:
+                    id: valid_colors
+
+        AccordionItemSection:
+            id: valid_shapes_accordion
+            title: 'valid shapes'
+            ScrollViewSection:
+                GridLayoutSection:
+                    id: valid_shapes
+
+        AccordionItemSection:
+            id: valid_sizes_accordion
+            title: 'valid sizes'
+            ScrollViewSection:
+                GridLayoutSection:
+                    id: valid_sizes
+
+
+
+<ScrollViewSection@ScrollView>:
+    scroll_timeout: 40
+    scroll_distance: 1
+    size_hint: 1, 1
+
+<GridLayoutSection@GridLayout>:
+    cols: 1
+    spacing: 4
+    row_default_height: '40dp'
+    size_hint_y:  None
+    height: self.minimum_height
+<AccordionItemSection@AccordionItem>
+    changed: 0

@@ -1,0 +1,764 @@
+###REMOVEDimport -> Gradient kivy_gradients.Gradient
+###REMOVEDimport ew kivy.uix.effectwidget
+
+
+
+#CONNECT STUFF
+<Spacer@Widget>:
+
+<SpacerConn@Spacer>:
+    size_hint_y: None
+    height: '40dp'
+
+
+<LabelConn@Label>:
+    size_hint_y: None
+    height: '40dp'
+    size_hint_x: None
+    width: '150dp'
+
+<ButtonConn@Button>:
+    size_hint_y: None
+    height: '40dp'
+    size_hint_x: None
+    width: '150dp'
+
+<RowConn@BoxLayout>:
+    size_hint_y:  None
+    height: '40dp'
+    spacing: 4
+
+<TextInputIP,TextInputPORT>
+    size_hint_y: None
+    height: '40dp'
+    size_hint_x: None
+    width: '150dp'
+    multiline: False
+    padding_y: (self.height - self.line_height) / 2
+
+<ScreenConnect>:
+    # avoid garbage collection of removable rows
+    row_ip: row_ip.__self__
+    row_port: row_port.__self__
+
+    RelativeLayout:
+        BoxLayout:
+            orientation: 'vertical'
+            Spacer:
+            GridLayout:
+                id: grid_conn
+                cols: 1
+                spacing: 4
+                row_default_height: '40dp'
+                size_hint: 1, None
+                height: '386dp'
+
+                # these two rows are stuck to gridlayout to avoid garbage collection on weakref
+
+                #1st Row: Title
+                RowConn:
+                    # id: row_title
+                    height: '50dp'
+                    SpacerConn:
+                        height: '50dp'
+                    LabelConn:
+                        height: '50dp'
+                        bold: True
+                        italic: True
+                        font_size: '20dp'
+                        text: 'Symbaduct' #no translation
+                    LabelConn:
+                        id: label_conn_message
+                        height: '50dp'
+                        color: 1, 0, 0, 1
+                        font_size: '20dp'
+                        text: '{label_conn_message}' #Bem Vindo!
+                    SpacerConn:
+
+                #2nd Row: IP
+                RowConn:
+                    id: row_ip
+                    SpacerConn:
+                    LabelConn:
+                        id: label_conn_ip
+                        text: '{label_conn_ip}' #IP Servidor
+                    TextInputIP:
+                        id: input_conn_ip
+                        text: '{input_conn_ip}' #127.0.0.1
+                        on_text_validate: app.save_host(self.text)
+                        on_text: app.set_host(self.text)
+
+                    SpacerConn:
+
+                #3rd Row: PORT
+                RowConn:
+                    id: row_port
+                    SpacerConn:
+                    LabelConn:
+                        id: label_conn_port
+                        text: '{label_conn_port}' #Porta
+                    TextInputPORT:
+                        id: input_conn_port
+                        text: '{input_conn_port}' #1234
+                        on_text_validate: app.save_port(self.text)
+                        on_text: app.set_port(self.text)
+
+                    SpacerConn:
+
+                #4th Row
+                RowConn:
+                    id: row_connect
+                    SpacerConn:
+                    ButtonConn:
+                        id: button_conn_exit
+                        text: '{button_conn_exit}' #Sair
+                        on_press: app.stop()
+                    ButtonConn:
+                        id: button_connect
+                        text: '{button_connect}' #Conectar
+                        on_press: root.connect_button_press()
+                    SpacerConn:
+
+                # 5th Row (just 1 label)
+                Label:
+                    id: label_conn_error
+                    size_hint_y: None
+                    height: '200dp'
+                    text_size: self.size
+                    font_size: '12dp'
+                    padding: (4, 4)
+                    text: ''
+                    valign: 'top'
+                    on_touch_down: self.collide_point(*args[1].pos) and root.on_click_printed_error(args[1])
+            Spacer:
+
+
+#WAIT STUFF
+<ScreenWait>:
+    RelativeLayout:
+
+        Label:
+    #        color: 0, 0, 0, 1
+            font_size: '36dp'
+            halign: 'center'
+            text: '{label_wait_message}'
+            canvas.before:
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+                    source: 'res/images/Harajuku - Cat Street - unusual architectural screen 01.jpg'
+
+#GAME STUFF
+
+<StretchImage@Image>:
+    y: self.parent.y
+    x: self.parent.x
+    allow_stretch: True
+    source: 'res/images/white.png'
+    pos: self.parent.pos
+    size: self.parent.size
+    mipmap: True
+
+<SetButton>:
+    height: int(self.parent.height * {set_buttons_smaller})
+    width: int(self.parent.height * {set_buttons_smaller})
+    background_normal: 'res/images/white.png'
+    background_down: 'res/images/50gray.png'
+    size_hint: None, None
+
+<ParameterButton>:
+    height: int(self.parent.height  * {set_buttons_smaller})
+    width: int(self.parent.height  * {set_buttons_smaller})
+    background_normal: 'res/images/white.png'
+    background_down: 'res/images/30gray.png'
+    size_hint: None, None
+
+<ColorButton>:
+    color_var: 1
+    height: int(self.parent.height  * {set_buttons_smaller})
+    width: int(self.parent.height  * {set_buttons_smaller})
+    background_normal: 'res/images/white.png'
+    background_down: 'res/images/30gray.png'
+    size_hint: None, None
+    on_enter: app.color_button_hover(self.color_var)
+    on_leave: app.color_button_hover_leave(self.color_var)
+    on_press: app.color_button_press(self.color_var)
+
+<SizeButton>:
+    size_var: 1
+    height: self.parent.height - 5
+    width: self.parent.height - 5
+    background_normal: 'res/images/white.png'
+    background_down: 'res/images/30gray.png'
+    background_color: 1, 1, 1, 0.7
+    size_hint: None, None
+    on_enter: app.size_button_hover(self.size_var)
+    on_leave: app.size_button_hover_leave(self.size_var)
+    on_press: app.size_button_press(self.size_var)
+    Image:
+        size_hint: None, None
+        y: self.parent.y + (self.parent.height - self.height) / 2
+        x: self.parent.x + (self.parent.width - self.width) / 2
+        allow_stretch: True
+        width: self.parent.width / 7 * self.parent.size_var
+        height: self.parent.height / 7 * self.parent.size_var
+        source: 'res/images/black_star.png'
+        mipmap: True
+
+<ShapeButton>:
+    shape_var: 1
+    height: int(self.parent.height  * {set_buttons_smaller})
+    width: int(self.parent.height  * {set_buttons_smaller})
+    background_normal: 'res/images/transparent.png'
+    background_down: 'res/images/30gray.png'
+    background_color: 1, 1, 1, 1
+    size_hint: None, None
+    on_enter: app.shape_button_hover(self.shape_var)
+    on_leave: app.shape_button_hover_leave(self.shape_var)
+    on_press: app.shape_button_press(self.shape_var)
+    Image:
+        color: 0.5, 0.5, 0.5, 1
+        id: shape_image
+        size_hint: None, None
+        y: self.parent.y
+        x: self.parent.x
+        allow_stretch: True
+        width: self.parent.width
+        height: self.parent.height
+        source: 'res/images/pentagon.png'
+        mipmap: True
+
+
+
+<SetButtonLayout@AnchorLayout>:
+    size_hint: None,None
+    anchor_x: 'center'
+    anchor_y: 'center'
+    width: self.parent.height
+    height: self.parent.height
+
+<ParameterButtonLayout@AnchorLayout>:
+    size_hint_y: None
+    anchor_x: 'center'
+    anchor_y: 'center'
+    width: self.parent.height / 7
+    height: self.parent.height / 7
+
+
+
+# (all 3 below are BoxLayout)
+<ColorParametersLayout>:
+    id: parameter_layout
+    orientation: 'vertical'
+    size_hint_x: None
+    width: '260dp'
+
+    ParameterButtonLayout:
+        ColorButton: # 1: blue
+            color_var: 1
+            id: color_1
+    ParameterButtonLayout:
+        ColorButton: # 2: green
+            color_var: 2
+            id: color_2
+    ParameterButtonLayout:
+        ColorButton: # 3: yellow
+            color_var: 3
+            id: color_3
+    ParameterButtonLayout:
+        ColorButton: # 4: orange
+            color_var: 4
+            id: color_4
+    ParameterButtonLayout:
+        ColorButton: # 5: purple
+            color_var: 5
+            id: color_5
+    ParameterButtonLayout:
+        ColorButton: # 6: red
+            color_var: 6
+            id: color_6
+    ParameterButtonLayout:
+        ColorButton: # 7: gray
+            color_var: 7
+            id: color_7
+
+<ShapeParametersLayout>:
+    id: parameter_layout
+    orientation: 'vertical'
+    size_hint_x: None
+    width: '260dp'
+
+    ParameterButtonLayout:
+        ShapeButton:
+            shape_var: 1
+            id: shape_1
+    ParameterButtonLayout:
+        ShapeButton:
+            shape_var: 2
+            id: shape_2
+    ParameterButtonLayout:
+        ShapeButton:
+            shape_var: 3
+            id: shape_3
+    ParameterButtonLayout:
+        ShapeButton:
+            shape_var: 4
+            id: shape_4
+    ParameterButtonLayout:
+        ShapeButton:
+            shape_var: 5
+            id: shape_5
+    ParameterButtonLayout:
+        ShapeButton:
+            shape_var: 6
+            id: shape_6
+    ParameterButtonLayout:
+        ShapeButton:
+            shape_var: 7
+            id: shape_7
+
+<SizeParametersLayout>:
+    id: parameter_layout
+    orientation: 'vertical'
+    size_hint_x: None
+    width: '260dp'
+
+    ParameterButtonLayout:
+        SizeButton:
+            size_var: 1
+            id: size_1
+    ParameterButtonLayout:
+        SizeButton:
+            size_var: 2
+            id: size_2
+    ParameterButtonLayout:
+        SizeButton:
+            size_var: 3
+            id: size_3
+    ParameterButtonLayout:
+        SizeButton:
+            size_var: 4
+            id: size_4
+    ParameterButtonLayout:
+        SizeButton:
+            size_var: 5
+            id: size_5
+    ParameterButtonLayout:
+        SizeButton:
+            size_var: 6
+            id: size_6
+    ParameterButtonLayout:
+        SizeButton:
+            size_var: 7
+            id: size_7
+
+
+<CompositeButton>:
+    size_hint: None, None
+    width: min(self.parent.height, self.parent.width)
+    height: min(self.parent.height, self.parent.width)
+    background_normal: 'res/images/transparent.png'
+    background_down: 'res/images/30gray.png'
+#    background_down: 'res/images/transparent.png'
+    background_color: 1, 1, 1, 1
+#    background_disabled_normal: ''
+
+    on_press: app.composite_button_press()
+
+    StretchImage:
+        id: comp_image
+        color: 1, 1, 1, 1
+
+
+<ScreenGame>:
+    RelativeLayout:
+
+        canvas.before:
+            Color:
+                rgba: root.r, root.g, root.b, root.a
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        BoxLayout:
+            id: game_area
+            orientation: 'vertical'
+            width: '1024dp'
+            height: '768dp'
+            pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
+            size_hint: None, None
+
+            canvas.before:
+                Color:
+                    rgba: root.r, root.g, root.b, root.a
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+#                    source: 'res/images/Texture 25 Rainbow light bubbles.jpg'
+
+            BoxLayout:
+                orientation: 'horizontal'
+                canvas.before:
+                    Color:
+                        rgba: root.test_r, root.test_g, root.test_b, root.test_a
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                FloatLayout:
+
+
+
+                    RelativeLayout: # smaller
+                        size_hint: None, None
+                        size: ('400dp', '346dp')
+                        pos: ('561dp', '43dp')
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, 1
+                            Rectangle:
+                                pos: 0,0
+                                size: self.size
+                        FloatLayout:
+                            width: '388dp'
+                            height: '334dp'
+                            size_hint: None, None
+                            pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                Rectangle:
+                                    pos: self.pos
+                                    size: self.size
+                            Button:
+                                pos: ('178dp', '74dp')
+                                width: '42dp'
+                                height: '42dp'
+                                size_hint: None, None
+                            Button:
+                                pos: ('298dp', '26dp')
+                                width: '38dp'
+                                height: '38dp'
+                                size_hint: None, None
+                            Button:
+                                pos: ('298dp', '126dp')
+                                width: '38dp'
+                                height: '38dp'
+                                size_hint: None, None
+                            RelativeLayout:
+                                pos: ('298dp', '126dp')
+                                size_hint: None, None
+                                size: ('158dp', '66dp')
+                                pos: ('178dp', '260dp')
+        #                        pos_hint_x: 0.5
+        #                        pos_hint_y: 0.5
+                                canvas.before:
+                                    Color:
+                                        rgba: 0, 0, 0, 1
+                                    RoundedRectangle:
+                                        pos: 0,0
+                                        size: self.size
+                                        segments: [15,]
+                                BoxLayout:
+                                    width: '154dp'
+                                    height: '61dp'
+                                    size_hint: None, None
+                                    pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
+                                    canvas.before:
+                                        Color:
+                                            rgba: 1, 1, 1, 1
+                                        RoundedRectangle:
+                                            pos: self.pos
+                                            size: self.size
+                                            segments: [15,]
+                                    Label:
+#                                        id: label_game_message
+                                        color: 0, 0, 0, 1
+                                        font_size: '24dp'
+                                        text_size: self.size
+                                        valign: 'middle'
+                                        halign: 'left'
+                                        text: ' pontos: 0'
+
+
+
+                    RelativeLayout:
+                        size_hint: None, None
+                        size: ('600dp', '519dp')
+                        pos: ('20dp', '199dp')
+#                        pos_hint_x: 0.5
+#                        pos_hint_y: 0.5
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, 1
+                            Rectangle:
+                                pos: 0,0
+                                size: self.size
+                        FloatLayout:
+                            width: '582dp'
+                            height: '501dp'
+                            size_hint: None, None
+                            pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                Rectangle:
+                                    pos: self.pos
+                                    size: self.size
+                            Button:
+                                pos: ('267dp', '111dp')
+                                width: '63dp'
+                                height: '63dp'
+                                size_hint: None, None
+                            Button:
+                                pos: ('447dp', '39dp')
+                                width: '57dp'
+                                height: '57dp'
+                                size_hint: None, None
+                            Button:
+                                pos: ('447dp', '189dp')
+                                width: '57dp'
+                                height: '57dp'
+                                size_hint: None, None
+                            RelativeLayout:
+                                pos: ('447dp', '189dp')
+                                size_hint: None, None
+                                size: ('237dp', '99dp')
+                                pos: ('267dp', '390dp')
+        #                        pos_hint_x: 0.5
+        #                        pos_hint_y: 0.5
+                                canvas.before:
+                                    Color:
+                                        rgba: 0, 0, 0, 1
+                                    RoundedRectangle:
+                                        pos: 0,0
+                                        size: self.size
+                                        segments: [15,]
+                                BoxLayout:
+                                    width: '231dp'
+                                    height: '93dp'
+                                    size_hint: None, None
+                                    pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
+                                    canvas.before:
+                                        Color:
+                                            rgba: 1, 1, 1, 1
+                                        RoundedRectangle:
+                                            pos: self.pos
+                                            size: self.size
+                                            segments: [15,]
+                                    Label:
+#                                        id: label_game_message
+                                        color: 0, 0, 0, 1
+                                        font_size: '36dp'
+                                        text_size: self.size
+                                        valign: 'middle'
+                                        halign: 'left'
+                                        text: ' pontos: 0'
+
+
+                    Label:
+                        id: label_game_message
+                        color: 0, 0, 0, 1
+                        font_size: '36dp'
+                        halign: 'center'
+                        text: 'UNSET'
+                        pos: ('800dp', '600dp')
+                        size_hint: 0.1, 0.1
+
+
+
+
+
+
+
+
+
+#<ScreenOLDGame>:
+##    r: back_window_color[0]
+##    g: back_window_color[1]
+##    b: back_window_color[2]
+##    a: back_window_color[3]
+#    RelativeLayout:
+#
+#        canvas.before:
+#            Color:
+#                rgba: root.r, root.g, root.b, root.a
+#            Rectangle:
+#                pos: self.pos
+#                size: self.size
+#
+#        BoxLayout:
+#            id: game_area
+#            orientation: 'vertical'
+#            width: '1024dp'
+#            height: '768dp'
+#            pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
+#            size_hint: None, None
+#
+#            canvas.before:
+#                Color:
+#                    rgba: root.r, root.g, root.b, root.a
+#                Rectangle:
+#                    pos: self.pos
+#                    size: self.size
+##                    source: 'res/images/Texture 25 Rainbow light bubbles.jpg'
+#
+#            BoxLayout:
+#                orientation: 'horizontal'
+#                id: box_top
+#                height: '190dp'
+#                size_hint_y: None
+#                BoxLayout:
+#                    # TOP-LEFT
+#                    orientation: 'horizontal'
+#                    size_hint_x: None
+#                    width: '250dp'
+#                    Spacer:
+#                        size_hint_x: None
+#                        width: '5dp'
+#                    StretchImage:
+#                        source: 'res/images/Coin_(Mario_Kart_8).png'
+#                        mipmap: True
+#                    BoxLayout:
+#                        orientation: 'vertical'
+#                        Label:
+#                            id: add_point_label
+#                            font_size: '36dp'
+#                            halign: 'left'
+#                            valign: 'middle'
+#                            text_size: self.size
+#                            text: ''
+#                            color: 0, 0, 0.4, 1
+#
+#                        Label:
+#                            id: point_label
+#                            font_size: '42dp'
+#                            halign: 'center'
+#                            valign: 'middle'
+#                            text_size: self.size
+#                            text: '0'
+#                            color: 0, 0, 0, 1
+#                        Spacer:
+#
+#                BoxLayout:
+#                    # TOP-CENTER
+#
+#                BoxLayout:
+#                    # TOP-RIGHT
+#
+#            BoxLayout:
+#                # MIDDLE
+#                orientation: 'horizontal'
+#                id: box_middle
+#                height: '388dp'
+#                size_hint_y: None
+#
+#                # MIDDLE-LEFT is added by the app (button layouts)
+#
+#                AnchorLayout:
+#                    # MIDDLE-CENTER
+#                    id: middle
+#                    size_hint_x: None
+#                    width: '504dp'
+#                    anchor_x: 'center'
+#                    anchor_y: 'center'
+#                    CompositeButton:
+#                        id:composite_button
+#
+#                BoxLayout:
+#                    # MIDDLE-RIGHT
+#
+#            BoxLayout:
+#                # BOTTOM-SPACER
+#                orientation: 'horizontal'
+#                id: box_lower_spacer_before
+#                height: '40dp'
+#                size_hint_y: None
+#
+#            BoxLayout:
+#                # BOTTOM
+#                orientation: 'horizontal'
+#                id: box_lower
+#                height: '110dp'
+#                size_hint_y: None
+#
+#                Spacer:
+#                    size_hint_x: None
+#                    width: '40dp'
+#
+#                SetButtonLayout: # COLOR BUTTON
+#                    SetButton:
+#                        id: set_color
+#                        on_enter: app.set_button_hover('color')
+#                        on_leave: app.set_button_hover_leave('color')
+#                        on_press: app.set_button_press('color')
+#                        StretchImage:
+#                            source: 'res/images/color.png'
+#
+#                Spacer:
+#                    size_hint_x: None
+#                    width: {set_buttons_spacing}
+#
+#                SetButtonLayout: # SHAPE BUTTON
+#                    SetButton:
+#                        id: set_shape
+#                        on_enter: app.set_button_hover('shape')
+#                        on_leave: app.set_button_hover_leave('shape')
+#                        on_press: app.set_button_press('shape')
+#                        StretchImage:
+#                            source: 'res/images/shape.png'
+#
+#                Spacer:
+#                    size_hint_x: None
+#                    width: {set_buttons_spacing}
+#
+#                SetButtonLayout: # SIZE BUTTON
+#                    SetButton:
+#                        id: set_size
+#                        on_enter: app.set_button_hover('size')
+#                        on_leave: app.set_button_hover_leave('size')
+#                        on_press: app.set_button_press('size')
+#                        StretchImage:
+#                            source: 'res/images/size.png'
+#
+#                Label:
+#                    id: label_game_message
+#                    color: 0, 0, 0, 1
+#                    font_size: '36dp'
+#                    halign: 'center'
+#                    text: ''
+#
+#            BoxLayout:
+#                orientation: 'horizontal'
+#                id: box_lower_spacer_after
+#                height: '40dp'
+#                size_hint_y: None
+
+# PAUSE STUFF
+
+<ScreenPause>:
+
+    Label:
+        id: pause_label
+#        color: 0, 0, 0, 1
+        font_size: '36dp'
+        halign: 'center'
+        text: 'PAUSE'
+        canvas.before:
+            Rectangle:
+                pos: self.pos
+                size: self.size
+                source: 'res/images/wait3.jpg'
+
+<ScreenEnd>:
+
+    Label:
+        id: end_label
+#        color: 0, 0, 0, 1
+        font_size: '36dp'
+        halign: 'center'
+        text: 'END'
+        canvas.before:
+            Rectangle:
+                pos: self.pos
+                size: self.size
+                source: 'res/images/Free Texture 253.png'
