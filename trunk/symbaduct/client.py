@@ -332,18 +332,16 @@ class ScreenGame(Screen):
     def test_player_count(self, player_count):
         self.ids.label_game_message.text = str(player_count)
         if player_count == 0:
-            # self.test_r = 1.0
-            # self.test_g = 0.5
-            # self.test_b = 0.5
-            # self.test_a = 1.0
-            self.adj_r = 1.0
-            self.adj_g = 0.5
-            self.adj_b = 0.5
-            self.adj_a = 1.0
-            self.ref_r = 0.5
-            self.ref_g = 0.5
-            self.ref_b = 1.0
-            self.ref_a = 1.0
+            pass
+
+            # self.adj_r = 1.0
+            # self.adj_g = 0.5
+            # self.adj_b = 0.5
+            # self.adj_a = 1.0
+            # self.ref_r = 0.5
+            # self.ref_g = 0.5
+            # self.ref_b = 1.0
+            # self.ref_a = 1.0
 
     def set_layout(self, button, initial_fix=False):
         pass

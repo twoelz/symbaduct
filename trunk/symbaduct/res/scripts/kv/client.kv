@@ -143,6 +143,44 @@
                     size: self.size
                     source: 'res/images/Harajuku - Cat Street - unusual architectural screen 01.jpg'
 
+<PointButton@Button>
+    size_hint: None, None
+    background_color: 0.7, 0.7, 0.7, 1
+    background_normal: 'res/images/70gray.png'
+#    background_down: 'res/images/30gray.png'
+
+<PointRefButton@PointButton>
+    pos: ('267dp', '111dp')
+    width: '63dp'
+    height: '63dp'
+
+<PointAdjButton@PointButton>
+    pos: ('178dp', '74dp')
+    width: '42dp'
+    height: '42dp'
+    background_down: 'res/images/70gray.png'
+
+
+<RefButton@Button>:
+    width: '57dp'
+    height: '57dp'
+    background_normal: 'res/images/50gray.png'
+    background_down: 'res/images/30gray.png'
+    size_hint: None, None
+    font_size: '21sp'
+
+<AdjButton@Button>:
+    width: '38dp'
+    height: '38dp'
+    background_normal: 'res/images/50gray.png'
+    background_down: 'res/images/50gray.png'
+#    background_disabled_down: 'res/images/50gray.png'
+#    background_disabled_normal: 'res/images/30gray.png'
+    size_hint: None, None
+    font_size: '14sp'
+#    disabled: True
+
+
 <ScreenGame>:
     RelativeLayout:
         canvas.before:
@@ -182,21 +220,14 @@
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    Button:
-                        pos: ('178dp', '74dp')
-                        width: '42dp'
-                        height: '42dp'
-                        size_hint: None, None
-                    Button:
+                    PointAdjButton:
+
+                    AdjButton:
                         pos: ('298dp', '26dp')
-                        width: '38dp'
-                        height: '38dp'
-                        size_hint: None, None
-                    Button:
+                        text: 'f'
+                    AdjButton:
                         pos: ('298dp', '126dp')
-                        width: '38dp'
-                        height: '38dp'
-                        size_hint: None, None
+                        text: 'n'
                     RelativeLayout:
                         size_hint: None, None
                         size: ('158dp', '66dp')
@@ -227,6 +258,13 @@
                                 halign: 'left'
                                 text: ' pontos: 0'
 
+                                Image:
+                                    width: min(self.parent.width, self.parent.height)
+                                    height: min(self.parent.width, self.parent.height)
+                                    source: 'res/images/Coin_(Mario_Kart_8).png'
+                                    mipmap: True
+
+
 
             RelativeLayout: # referent quadrant
                 size_hint: None, None
@@ -249,21 +287,14 @@
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    Button:
-                        pos: ('267dp', '111dp')
-                        width: '63dp'
-                        height: '63dp'
-                        size_hint: None, None
-                    Button:
+                    PointRefButton:
+
+                    RefButton:
                         pos: ('447dp', '39dp')
-                        width: '57dp'
-                        height: '57dp'
-                        size_hint: None, None
-                    Button:
+                        text: 'f'
+                    RefButton:
                         pos: ('447dp', '189dp')
-                        width: '57dp'
-                        height: '57dp'
-                        size_hint: None, None
+                        text: 'n'
                     RelativeLayout:
                         size_hint: None, None
                         size: ('237dp', '99dp')
@@ -292,6 +323,11 @@
                                 valign: 'middle'
                                 halign: 'left'
                                 text: ' pontos: 0'
+                                Image:
+                                    width: min(self.parent.width, self.parent.height)
+                                    height: min(self.parent.width, self.parent.height)
+                                    source: 'res/images/Coin_(Mario_Kart_8).png'
+                                    mipmap: True
 
 
             Label:
