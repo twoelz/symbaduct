@@ -139,6 +139,7 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.screenmanager import Screen
@@ -297,10 +298,18 @@ class ScreenGame(Screen):
     g = NumericProperty(BACKGROUND_COLOR[1])
     b = NumericProperty(BACKGROUND_COLOR[2])
     a = NumericProperty(BACKGROUND_COLOR[3])
-    test_r = NumericProperty(0.5)
-    test_g = NumericProperty(1.0)
-    test_b = NumericProperty(0.5)
-    test_a = NumericProperty(1.0)
+    # test_r = NumericProperty(0.5)
+    # test_g = NumericProperty(1.0)
+    # test_b = NumericProperty(0.5)
+    # test_a = NumericProperty(1.0)
+    adj_r = NumericProperty(1.0)
+    adj_g = NumericProperty(1.0)
+    adj_b = NumericProperty(1.0)
+    adj_a = NumericProperty(1.0)
+    ref_r = NumericProperty(1.0)
+    ref_g = NumericProperty(1.0)
+    ref_b = NumericProperty(1.0)
+    ref_a = NumericProperty(1.0)
 
     def __init__(self, **kwargs):
         super(ScreenGame, self).__init__(**kwargs)
@@ -322,12 +331,19 @@ class ScreenGame(Screen):
 
     def test_player_count(self, player_count):
         self.ids.label_game_message.text = str(player_count)
-        if player_count == 1:
-            self.test_r = 1.0
-            self.test_g = 0.5
-            self.test_b = 0.5
-            self.test_a = 1.0
-
+        if player_count == 0:
+            # self.test_r = 1.0
+            # self.test_g = 0.5
+            # self.test_b = 0.5
+            # self.test_a = 1.0
+            self.adj_r = 1.0
+            self.adj_g = 0.5
+            self.adj_b = 0.5
+            self.adj_a = 1.0
+            self.ref_r = 0.5
+            self.ref_g = 0.5
+            self.ref_b = 1.0
+            self.ref_a = 1.0
 
     def set_layout(self, button, initial_fix=False):
         pass

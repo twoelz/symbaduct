@@ -1,8 +1,3 @@
-###REMOVEDimport -> Gradient kivy_gradients.Gradient
-###REMOVEDimport ew kivy.uix.effectwidget
-
-
-
 #CONNECT STUFF
 <Spacer@Widget>:
 
@@ -148,211 +143,165 @@
                     size: self.size
                     source: 'res/images/Harajuku - Cat Street - unusual architectural screen 01.jpg'
 
-#GAME STUFF
-
-#<StretchImage@Image>:
-#    y: self.parent.y
-#    x: self.parent.x
-#    allow_stretch: True
-#    source: 'res/images/white.png'
-#    pos: self.parent.pos
-#    size: self.parent.size
-#    mipmap: True
-
-
 <ScreenGame>:
     RelativeLayout:
-
         canvas.before:
             Color:
-                rgba: root.r, root.g, root.b, root.a
+                rgba: 0, 0, 0, 1
             Rectangle:
                 pos: self.pos
                 size: self.size
-
-        BoxLayout:
+        RelativeLayout:
             id: game_area
-            orientation: 'vertical'
             width: '1024dp'
             height: '768dp'
             pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
             size_hint: None, None
-
             canvas.before:
                 Color:
                     rgba: root.r, root.g, root.b, root.a
                 Rectangle:
-                    pos: self.pos
                     size: self.size
-#                    source: 'res/images/Texture 25 Rainbow light bubbles.jpg'
-
-            BoxLayout:
-                orientation: 'horizontal'
+            RelativeLayout: # adjacent quadrant
+                size_hint: None, None
+                size: ('400dp', '346dp')
+                pos: ('561dp', '43dp')
                 canvas.before:
                     Color:
-                        rgba: root.test_r, root.test_g, root.test_b, root.test_a
+                        rgba: 0, 0, 0, 1
                     Rectangle:
-                        pos: self.pos
                         size: self.size
                 FloatLayout:
-
-
-
-                    RelativeLayout: # smaller
+                    width: '388dp'
+                    height: '334dp'
+                    size_hint: None, None
+                    pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
+                    canvas.before:
+                        Color:
+                            rgba: root.adj_r, root.adj_g, root.adj_b, root.adj_a
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    Button:
+                        pos: ('178dp', '74dp')
+                        width: '42dp'
+                        height: '42dp'
                         size_hint: None, None
-                        size: ('400dp', '346dp')
-                        pos: ('561dp', '43dp')
-                        canvas.before:
-                            Color:
-                                rgba: 0, 0, 0, 1
-                            Rectangle:
-                                pos: 0,0
-                                size: self.size
-                        FloatLayout:
-                            width: '388dp'
-                            height: '334dp'
-                            size_hint: None, None
-                            pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
-                            canvas.before:
-                                Color:
-                                    rgba: 1, 1, 1, 1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                            Button:
-                                pos: ('178dp', '74dp')
-                                width: '42dp'
-                                height: '42dp'
-                                size_hint: None, None
-                            Button:
-                                pos: ('298dp', '26dp')
-                                width: '38dp'
-                                height: '38dp'
-                                size_hint: None, None
-                            Button:
-                                pos: ('298dp', '126dp')
-                                width: '38dp'
-                                height: '38dp'
-                                size_hint: None, None
-                            RelativeLayout:
-                                pos: ('298dp', '126dp')
-                                size_hint: None, None
-                                size: ('158dp', '66dp')
-                                pos: ('178dp', '260dp')
-        #                        pos_hint_x: 0.5
-        #                        pos_hint_y: 0.5
-                                canvas.before:
-                                    Color:
-                                        rgba: 0, 0, 0, 1
-                                    RoundedRectangle:
-                                        pos: 0,0
-                                        size: self.size
-                                        segments: [15,]
-                                BoxLayout:
-                                    width: '154dp'
-                                    height: '61dp'
-                                    size_hint: None, None
-                                    pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
-                                    canvas.before:
-                                        Color:
-                                            rgba: 1, 1, 1, 1
-                                        RoundedRectangle:
-                                            pos: self.pos
-                                            size: self.size
-                                            segments: [15,]
-                                    Label:
-#                                        id: label_game_message
-                                        color: 0, 0, 0, 1
-                                        font_size: '24dp'
-                                        text_size: self.size
-                                        valign: 'middle'
-                                        halign: 'left'
-                                        text: ' pontos: 0'
-
-
-
+                    Button:
+                        pos: ('298dp', '26dp')
+                        width: '38dp'
+                        height: '38dp'
+                        size_hint: None, None
+                    Button:
+                        pos: ('298dp', '126dp')
+                        width: '38dp'
+                        height: '38dp'
+                        size_hint: None, None
                     RelativeLayout:
                         size_hint: None, None
-                        size: ('600dp', '519dp')
-                        pos: ('20dp', '199dp')
-#                        pos_hint_x: 0.5
-#                        pos_hint_y: 0.5
+                        size: ('158dp', '66dp')
+                        pos: ('178dp', '260dp')
                         canvas.before:
                             Color:
                                 rgba: 0, 0, 0, 1
-                            Rectangle:
-                                pos: 0,0
+                            RoundedRectangle:
                                 size: self.size
-                        FloatLayout:
-                            width: '582dp'
-                            height: '501dp'
+                                segments: [15,]
+                        RelativeLayout:
+                            width: '154dp'
+                            height: '61dp'
                             size_hint: None, None
                             pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
                             canvas.before:
                                 Color:
                                     rgba: 1, 1, 1, 1
-                                Rectangle:
-                                    pos: self.pos
+                                RoundedRectangle:
                                     size: self.size
-                            Button:
-                                pos: ('267dp', '111dp')
-                                width: '63dp'
-                                height: '63dp'
-                                size_hint: None, None
-                            Button:
-                                pos: ('447dp', '39dp')
-                                width: '57dp'
-                                height: '57dp'
-                                size_hint: None, None
-                            Button:
-                                pos: ('447dp', '189dp')
-                                width: '57dp'
-                                height: '57dp'
-                                size_hint: None, None
-                            RelativeLayout:
-                                pos: ('447dp', '189dp')
-                                size_hint: None, None
-                                size: ('237dp', '99dp')
-                                pos: ('267dp', '390dp')
-        #                        pos_hint_x: 0.5
-        #                        pos_hint_y: 0.5
-                                canvas.before:
-                                    Color:
-                                        rgba: 0, 0, 0, 1
-                                    RoundedRectangle:
-                                        pos: 0,0
-                                        size: self.size
-                                        segments: [15,]
-                                BoxLayout:
-                                    width: '231dp'
-                                    height: '93dp'
-                                    size_hint: None, None
-                                    pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
-                                    canvas.before:
-                                        Color:
-                                            rgba: 1, 1, 1, 1
-                                        RoundedRectangle:
-                                            pos: self.pos
-                                            size: self.size
-                                            segments: [15,]
-                                    Label:
+                                    segments: [15,]
+                            Label:
 #                                        id: label_game_message
-                                        color: 0, 0, 0, 1
-                                        font_size: '36dp'
-                                        text_size: self.size
-                                        valign: 'middle'
-                                        halign: 'left'
-                                        text: ' pontos: 0'
+                                color: 0, 0, 0, 1
+                                font_size: '24dp'
+                                text_size: self.size
+                                valign: 'middle'
+                                halign: 'left'
+                                text: ' pontos: 0'
 
 
-                    Label:
-                        id: label_game_message
-                        color: 0, 0, 0, 1
-                        font_size: '36dp'
-                        halign: 'center'
-                        text: 'UNSET'
-                        pos: ('800dp', '600dp')
-                        size_hint: 0.1, 0.1
+            RelativeLayout: # referent quadrant
+                size_hint: None, None
+                size: ('600dp', '519dp')
+                pos: ('20dp', '199dp')
+                canvas.before:
+                    Color:
+                        rgba: 0, 0, 0, 1
+                    Rectangle:
+                        pos: 0,0
+                        size: self.size
+                FloatLayout:
+                    width: '582dp'
+                    height: '501dp'
+                    size_hint: None, None
+                    pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
+                    canvas.before:
+                        Color:
+                            rgba: root.ref_r, root.ref_g, root.ref_b, root.ref_a
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    Button:
+                        pos: ('267dp', '111dp')
+                        width: '63dp'
+                        height: '63dp'
+                        size_hint: None, None
+                    Button:
+                        pos: ('447dp', '39dp')
+                        width: '57dp'
+                        height: '57dp'
+                        size_hint: None, None
+                    Button:
+                        pos: ('447dp', '189dp')
+                        width: '57dp'
+                        height: '57dp'
+                        size_hint: None, None
+                    RelativeLayout:
+                        size_hint: None, None
+                        size: ('237dp', '99dp')
+                        pos: ('267dp', '390dp')
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, 1
+                            RoundedRectangle:
+                                size: self.size
+                                segments: [15,]
+                        RelativeLayout:
+                            width: '231dp'
+                            height: '93dp'
+                            size_hint: None, None
+                            pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    size: self.size
+                                    segments: [15,]
+                            Label:
+                                color: 0, 0, 0, 1
+                                font_size: '36dp'
+                                text_size: self.size
+                                valign: 'middle'
+                                halign: 'left'
+                                text: ' pontos: 0'
+
+
+            Label:
+                id: label_game_message
+                color: 0, 0, 0, 1
+                font_size: '36dp'
+                halign: 'center'
+                text: 'UNSET'
+                pos: ('800dp', '600dp')
+                size_hint: 0.1, 0.1
 
 
 
