@@ -21,7 +21,7 @@ import os
 import codecs
 import cPickle as pickle
 
-# import random
+import random
 # import csv
 # import time
 # import copy
@@ -152,6 +152,8 @@ from kivy.properties import NumericProperty
 from kivy.properties import DictProperty
 from kivy.core.audio import SoundLoader
 
+from kivy.animation import Animation
+
 # from kivy.graphics.texture import Texture
 # from kivy.graphics.svg import Svg
 
@@ -278,7 +280,6 @@ class ScreenConnect(Screen):
     def print_error(self, error):
         self.ids.label_conn_error.text = error
 
-
     def on_click_printed_error(self, touch):
         Clipboard.put(str(self.ids.label_conn_error.text), 'UTF8_STRING')
         if touch.is_double_tap:
@@ -310,6 +311,14 @@ class ScreenGame(Screen):
     ref_g = NumericProperty(1.0)
     ref_b = NumericProperty(1.0)
     ref_a = NumericProperty(1.0)
+    ref_coin_size = 1.0
+    ref_coin_reduce = True
+    ref_coin_count = 5
+    ref_coin_started = False
+
+
+    # events
+    update_event = None
 
     def __init__(self, **kwargs):
         super(ScreenGame, self).__init__(**kwargs)
@@ -324,6 +333,61 @@ class ScreenGame(Screen):
 
         if obs:
             self.disable_buttons()
+
+
+    def start_update(self):
+
+        self.coin_anim()
+
+        # self.update_event = Clock.schedule_interval(self.update, 0.01)
+
+    def coin_anim(self, adj=False):
+
+        if adj:
+            ref_coin = self.ids.adj_coin
+            plus_label = self.ids.adj_plus
+        else:
+            ref_coin = self.ids.ref_coin
+            plus_label = self.ids.ref_plus
+
+        size_b4 = ref_coin.parent.height
+        size_after = size_b4 * 0.5
+        ref_coin.width = ref_coin.parent.height * self.ref_coin_size
+        ref_coin.height = ref_coin.parent.height * self.ref_coin_size
+        anim = Animation(size=(size_after, size_after), t='out_cubic', duration=0.1)
+        # anim.bind(on_complete=lambda x, y: app.change_points())
+        anim += Animation(size=(size_b4, size_b4), t='out_cubic', duration=0.1)
+        anim.start(ref_coin)
+
+        plus_label.text = "+1"
+
+        if not adj:
+            play(app.sound['point added'])
+        # Clock.schedule_once(self.clear_plus)
+        Clock.schedule_once(lambda dt: self.change_points(adj=adj), 0.1)
+
+    def change_points(self, adj=False):
+        if adj:
+            point_label = self.ids.adj_points
+            points = app.adj_points
+        else:
+            point_label = self.ids.ref_points
+            points = app.ref_points
+
+        point_label.text = str(points)
+
+
+        Clock.schedule_once(lambda dt: self.clear_plus(adj=adj), 0.25)
+
+
+    def clear_plus(self, adj=False):
+        if adj:
+            plus_label = self.ids.adj_plus
+        else:
+            plus_label = self.ids.ref_plus
+
+        plus_label.text = ''
+
 
     def disable_buttons(self):
         # obs here: disable all buttons (currently disabled by checking obs)
@@ -345,6 +409,45 @@ class ScreenGame(Screen):
 
     def set_layout(self, button, initial_fix=False):
         pass
+
+    def update(self, dt):
+
+        print 'hi'
+
+        if self.ref_coin_size <= 0.5:
+            self.ref_coin_reduce = False
+
+        if self.ref_coin_size >= 1.0:
+            self.ref_coin_reduce = True
+
+        if self.ref_coin_reduce:
+            self.ref_coin_size -= 0.01
+        else:
+            self.ref_coin_size += 0.01
+
+        print self.ref_coin_size
+
+
+
+        ref_coin = self.ids.ref_coin
+
+        if not self.ref_coin_started:
+            self.ref_coin_started = True
+            # ref_coin.mipmap = False
+
+        ref_coin.width = ref_coin.parent.height * self.ref_coin_size
+        ref_coin.height = ref_coin.parent.height * self.ref_coin_size
+
+
+        if self.ref_coin_size >= 1.0:
+            self.ref_coin_count -= 1
+            if self.ref_coin_count == 0:
+                Clock.unschedule(self.update_event)
+                ref_coin.width = ref_coin.parent.height
+                ref_coin.height = ref_coin.parent.height
+                self.ref_coin_started = False
+                # ref_coin.mipmap = True
+
 
 class ScreenPause(Screen):
     pass
@@ -447,19 +550,25 @@ class ScreenManagerMain(ScreenManager):
         fix_window_size()
         self.go_to('game')
 
-        app = App.get_running_app()
+        # app = App.get_running_app()
         player_count = app.player_count
         if obs:
             player_count = 'Observer {}'.format(player_count)
         else:
             print player_count
-        sm.get_screen('game').test_player_count(player_count)
+
+        game_screen = sm.get_screen('game')
+        game_screen.test_player_count(player_count)
 
         # fix game screen almost as soon as it is shown
         # Clock.schedule_once(app.fix_game_layout, 0.1)
 
         # reset connect screen layout for when we go back to that screen.
         Clock.schedule_once(self.get_screen('connect').reset_layout, 0.2)
+        game_screen.start_update()
+
+
+
 
 
     def player_left(self):
@@ -584,6 +693,22 @@ class ClientAMP(amp.AMP):
 
         sm.session_end(status)
         return {}
+
+    @cmd.AddPoint.responder
+    def add_point(self, player, points):
+
+        if player == 0:
+            print 'PLAYER 1'
+        else: # player == 1
+            print 'PLAYER 2'
+
+        app.add_point(player, points)
+
+        return {}
+
+    def point_press(self):
+        self.callRemote(cmd.PointPress)
+
 
     # @cmd.StartFeedback.responder
     # def start_feedback(self, points, total_points, reset_color, reset_shape, reset_size):
@@ -754,6 +879,9 @@ class ClientFactory(_InstanceFactory):
         del self.client
         self.client = None
 
+
+
+
 class ClientApp(App):
 
     player_count = None
@@ -772,8 +900,14 @@ class ClientApp(App):
 
     observer_message = u''
 
+    ref_points = 0
+    adj_points = 0
+
     def build(self):
         global sm
+        global app
+        app = self
+
         sm = ScreenManagerMain(transition=SlideTransition())
         sm.add_widget(ScreenConnect(name='connect'))
         sm.add_widget(ScreenWait(name='wait'))
@@ -781,10 +915,11 @@ class ClientApp(App):
         sm.add_widget(ScreenPause(name='pause'))
         sm.add_widget(ScreenEnd(name='end'))
 
-        self.sound['point added'] = SoundLoader.load('res/sounds/smw_coin.wav')
-        self.sound['point change'] = SoundLoader.load('res/sounds/coinshake.wav')
-        self.sound['start choice'] = SoundLoader.load('res/sounds/swosh.wav')
-        self.sound['button press'] = SoundLoader.load('res/sounds/button.wav')
+        self.sound['point added'] = [SoundLoader.load('res/sounds/smw_coin.wav') for _ in xrange(5)]
+        self.sound['point change'] = [SoundLoader.load('res/sounds/coinshake.wav') for _ in xrange(5)]
+        self.sound['start choice'] = [SoundLoader.load('res/sounds/swosh.wav') for _ in xrange(5)]
+        self.sound['button press'] = [SoundLoader.load('res/sounds/button.wav') for _ in xrange(5)]
+
 
         if obs:
             self.title = 'Observer'
@@ -1257,12 +1392,40 @@ class ClientApp(App):
         gm = sm.get_screen('game')
         gm.ids.label_game_message.text = self.observer_message
 
-    def change_points(self):
-        gm = sm.get_screen('game')
-        gm.ids.point_label.text = '{}'.format(self.total_points)
-        gm.ids.add_point_label.text = ''
-        if self.points_added:
-            self.sound['point change'].play()
+
+    def point_press(self):
+
+        fac.client.point_press()
+
+    def add_point(self, player, points):
+        adj = False
+        if not player == self.player_count:
+            adj = True
+        else:
+            pass
+        if self.player_count == 0:
+            self.ref_points = points[0]
+            self.adj_points = points[1]
+        else:
+            self.ref_points = points[1]
+            self.adj_points = points[0]
+
+        sm.get_screen('game').coin_anim(adj)
+
+        # self.adj_points += 1
+        # self.adj_points += 1
+        # gm = sm.get_screen('game')
+        # gm.coin_anim()
+
+
+
+        # self.sound['point change'].play()
+
+        # gm = sm.get_screen('game')
+        # gm.ids.point_label.text = '{}'.format(self.total_points)
+        # gm.ids.add_point_label.text = ''
+        # if self.points_added:
+        #     self.sound['point change'].play()
     #
     # def press_right(self):
     #     self.pressed_right()
@@ -1403,6 +1566,8 @@ def set_obs_on():
     global obs
     obs = True
 
+
+
 def main():
     # global sm
     global stout
@@ -1446,6 +1611,15 @@ fac = None
 obs = False
 sm = None
 stout = False
+app = None
+
+play_index = 0
+
+
+def play(sound):
+    global play_index
+    sound[play_index].play()
+    play_index = (play_index + 1) % 5
 
 
 # fool inspection

@@ -54,7 +54,6 @@ from validate import Validator
 from validate import ValidateError
 import easygui as eg
 
-
 # DECIMAL import
 try:
     import cdecimal as decimal
@@ -169,9 +168,8 @@ class Protocol(amp.AMP):
             for p in fac.observers.itervalues():
                 p.callRemote(cmd.PlayerLeft)
 
-
-                    # if fac.experiment
-                    # check if observer left
+                # if fac.experiment
+                # check if observer left
 
     # command methods
 
@@ -236,7 +234,6 @@ class Protocol(amp.AMP):
             p.callRemote(cmd.GameReady)
         return {}
 
-
     @cmd.AddAdmin.responder
     def add_admin(self):
         '''admin attempts to connect:
@@ -270,6 +267,19 @@ class Protocol(amp.AMP):
         return {}
 
     # MAIN actions
+
+    @cmd.PointPress.responder
+    def point_press(self):
+        fac.point_press(self.client_count)
+        # fac.set_time()
+        #
+        # fac.points[self.client_count] += 1
+        #
+        # for p in fac.get_players_and_observer():
+        #     p.callRemote(cmd.AddPoint,
+        #                     player=self.client_count,
+        #                     points=fac.points)
+        return {}
 
     # @cmd.SetButtonHover.responder
     # def set_button_hover(self, button, forced):
@@ -400,6 +410,7 @@ class Protocol(amp.AMP):
     #
     #     return {}
 
+
 class SymbaductFactory(Factory):
     '''A factory that creates and holds data and protocol instances.'''
     protocol = Protocol
@@ -421,6 +432,14 @@ class SymbaductFactory(Factory):
         self.delay_calls = {}
 
         # experiment variables
+
+        self.points = [0, 0]
+        self.count_click = [0, 0]
+        # options: ratio, interval, (?)
+        self.schedule = ['interval', 'ratio']
+        self.ratio = [5, 5]
+        self.interval = [3.0, 3.0]
+
         # self.active_set = 'color'
         # self.active_color = 1
         # self.active_shape = 1
@@ -440,8 +459,11 @@ class SymbaductFactory(Factory):
         self.time_cycle = self.now
         self.event = 0
         self.previous_event = self.event
-        self.time_press = 0
-        self.time_previous_press = 0
+        self.time_press = [0, 0]
+        self.time_previous_press = [0, 0]
+        self.time_previous_point_press = [0, 0]
+        self.time_point_press = [0, 0]
+        self.time_schedule = [0, 0]
         # self.time_start_choice = 0
         # self.time_choice = 0
 
@@ -613,6 +635,39 @@ class SymbaductFactory(Factory):
         self.time_previous_press = self.time_press
         self.time_press = self.now
 
+    def point_press(self, player):
+        self.set_time()
+        self.time_previous_press[player] = self.time_press[player]
+        self.time_press[player] = self.now
+        self.time_previous_point_press[player] = self.time_point_press[player]
+        self.time_point_press[player] = self.now
+
+        add_point = False
+
+        schedule = self.schedule[player]
+        if schedule == 'ratio':
+
+            self.count_click[player] += 1
+
+            if self.count_click[player] == self.ratio[player]:
+                self.count_click[player] = 0
+                add_point = True
+
+        elif schedule == 'interval':
+            if self.now - self.time_schedule[player] >= self.interval[player]:
+                self.time_schedule[player] = self.now
+                add_point = True
+
+        if add_point:
+            self.add_point(player)
+
+    def add_point(self, player):
+        self.points[player] += 1
+        for p in self.get_players_and_observer():
+            p.callRemote(cmd.AddPoint,
+                         player=player,
+                         points=self.points)
+
     #
     # def record_choice(self, player): #CHOICE
     #     print 'got to record choice'
@@ -656,30 +711,29 @@ class SymbaductFactory(Factory):
 
     #
     # def choice_made(self, player):
-        # self.n_correct = 0
-        # if cfg.exp['valid_colors']['color {}'.format(self.active_color)]:
-        #     self.n_correct += 1
-        # if cfg.exp['valid_shapes']['shape {}'.format(self.active_shape)]:
-        #     self.n_correct += 1
-        # if cfg.exp['valid_sizes']['size {}'.format(self.active_size)]:
-        #     self.n_correct += 1
-        # self.points = cfg.exp['game_points']['{} correct'.format(self.n_correct)]
-        # # self.total_points += self.points
-        #
-        #
-        # self.record_choice(player)
-        # cfg.exp['save']['cycle'] += 1
-        # if self.n_correct >= cfg.exp['performance_criteria']['corrects required']:
-        #     cfg.exp['save']['window results'].append(True)
-        # else:
-        #     cfg.exp['save']['window results'].append(False)
-        # window_size = cfg.exp['performance_criteria']['window size']
-        # cfg.exp['save']['window results'] = cfg.exp['save']['window results'][-1*window_size:]
-        # cfg.exp.write()
-        # self.check_end_criteria()
-        # self.update_observer()
-        # self.update_config()
-
+    # self.n_correct = 0
+    # if cfg.exp['valid_colors']['color {}'.format(self.active_color)]:
+    #     self.n_correct += 1
+    # if cfg.exp['valid_shapes']['shape {}'.format(self.active_shape)]:
+    #     self.n_correct += 1
+    # if cfg.exp['valid_sizes']['size {}'.format(self.active_size)]:
+    #     self.n_correct += 1
+    # self.points = cfg.exp['game_points']['{} correct'.format(self.n_correct)]
+    # # self.total_points += self.points
+    #
+    #
+    # self.record_choice(player)
+    # cfg.exp['save']['cycle'] += 1
+    # if self.n_correct >= cfg.exp['performance_criteria']['corrects required']:
+    #     cfg.exp['save']['window results'].append(True)
+    # else:
+    #     cfg.exp['save']['window results'].append(False)
+    # window_size = cfg.exp['performance_criteria']['window size']
+    # cfg.exp['save']['window results'] = cfg.exp['save']['window results'][-1*window_size:]
+    # cfg.exp.write()
+    # self.check_end_criteria()
+    # self.update_observer()
+    # self.update_config()
 
     # def update_observer(self):
     #     for p in self.get_observer():
@@ -745,12 +799,9 @@ class SymbaductFactory(Factory):
     #     for p in self.get_players_and_observer():
     #         p.callRemote(cmd.RestartChoice).addErrback(bailout)
 
-
-
     # def change_points(self):
     #     for p in self.get_players_and_observer():
     #         p.callRemote(cmd.ChangePoints).addErrback(bailout)
-
 
     def expire_session(self):
         if self.end:
@@ -786,7 +837,6 @@ class SymbaductFactory(Factory):
                     cycle=cfg.exp['save']['cycle'] + 1,
                     t_start=n_uni(0))
         self.record_line(**data)
-
 
     #
     def get_players_and_observer(self):

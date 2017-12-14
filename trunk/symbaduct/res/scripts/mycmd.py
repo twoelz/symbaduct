@@ -8,7 +8,7 @@ Amp Commands (network commands)
 '''
 
 from twisted.protocols import amp
-# from amptypes import amptypes #uncomment if needed, otherwise leave it here
+import amptypes
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # client to server
@@ -25,9 +25,8 @@ class AddClient(amp.Command):
 class ReadyPlayers(amp.Command):
     response = []
 
-
-
-
+class PointPress(amp.Command):
+    response = []
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # observer to server
@@ -84,6 +83,12 @@ class GameReady(amp.Command):
 
 class PlayerLeft(amp.Command):
     response = []
+
+class AddPoint(amp.Command):
+    arguments = [('player', amp.Integer()),
+                 ('points', amptypes.TypedList(amp.Integer()))]
+    response = []
+
 
 # class NotifyEnd(amp.Command):
 #     # arguments = [('end_experiment', amp.Boolean()),

@@ -153,6 +153,7 @@
     pos: ('267dp', '111dp')
     width: '63dp'
     height: '63dp'
+    on_press: app.point_press()
 
 <PointAdjButton@PointButton>
     pos: ('178dp', '74dp')
@@ -249,21 +250,37 @@
                                 RoundedRectangle:
                                     size: self.size
                                     segments: [15,]
-                            Label:
-#                                        id: label_game_message
-                                color: 0, 0, 0, 1
-                                font_size: '24dp'
-                                text_size: self.size
-                                valign: 'middle'
-                                halign: 'left'
-                                text: ' pontos: 0'
-
+                            Widget:
                                 Image:
-                                    width: min(self.parent.width, self.parent.height)
-                                    height: min(self.parent.width, self.parent.height)
+                                    id: adj_coin
+                                    pos: (self.parent.height - self.height) / 2, (self.parent.height - self.height) / 2
+                                    width: self.parent.height
+                                    height: self.parent.height
                                     source: 'res/images/Coin_(Mario_Kart_8).png'
                                     mipmap: True
+                    Label:
+                        id: adj_points
+                        size_hint: None, None
+                        size: ('92dp', '66dp')  # same as layout - 66 to width
+                        pos: ('244dp', '260dp')  # same as layout + 66 to x
+                        color: 0, 0, 0, 1
+                        font_size: '24dp'
+                        text_size: self.size
+                        valign: 'middle'
+                        halign: 'center'
+                        text: '0'
 
+                    Label: # +1
+                        id: adj_plus
+                        size_hint: None, None
+                        size: ('66dp', '66dp')  # same as before 66 width
+                        pos: ('240dp', '276dp')  # same as bfore, up 16, left 4
+                        color: 10.7, 0.62, 0.1, 1 # average color of coin image
+                        font_size: '24dp'
+                        text_size: self.size
+                        valign: 'middle' # left aligned though
+                        halign: 'left'
+                        text: '+1'
 
 
             RelativeLayout: # referent quadrant
@@ -288,6 +305,8 @@
                             pos: self.pos
                             size: self.size
                     PointRefButton:
+                        id: point_button
+
 
                     RefButton:
                         pos: ('447dp', '39dp')
@@ -316,19 +335,38 @@
                                 RoundedRectangle:
                                     size: self.size
                                     segments: [15,]
-                            Label:
-                                color: 0, 0, 0, 1
-                                font_size: '36dp'
-                                text_size: self.size
-                                valign: 'middle'
-                                halign: 'left'
-                                text: ' pontos: 0'
+                            Widget:
                                 Image:
-                                    width: min(self.parent.width, self.parent.height)
-                                    height: min(self.parent.width, self.parent.height)
+                                    id: ref_coin
+                                    pos: (self.parent.height - self.height) / 2, (self.parent.height - self.height) / 2
+                                    width: self.parent.height
+                                    height: self.parent.height
                                     source: 'res/images/Coin_(Mario_Kart_8).png'
                                     mipmap: True
 
+                    Label:
+                        id: ref_points
+                        size_hint: None, None
+                        size: ('144dp', '99dp')
+                        pos: ('360dp', '390dp') # SAME AS REL LAYOUT, start after image (93 width)
+                        color: 0, 0, 0, 1
+                        font_size: '36dp'
+                        text_size: self.size
+                        valign: 'middle'
+                        halign: 'center'
+                        text: '0'
+
+                    Label: # +1
+                        id: ref_plus
+                        size_hint: None, None
+                        size: ('99dp', '99dp')  # same as before (99 width)
+                        pos: ('354dp', '414dp')  # same as bfore, up 24, left about 6
+                        color: 0.7, 0.62, 0.1, 1 # average color of coin image
+                        font_size: '36dp'
+                        text_size: self.size
+                        valign: 'middle' # left aligned though
+                        halign: 'left'
+                        text: '+1'
 
             Label:
                 id: label_game_message
