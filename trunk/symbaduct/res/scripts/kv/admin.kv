@@ -28,34 +28,25 @@ BoxLayout:
         orientation: 'vertical'
         AccordionItemSection:
             id: options_accordion
-            title: 'options'
+            title: 'utilities'
             ScrollViewSection:
                 GridLayoutSection:
-                    id: options
+                    id: utilities
                     BoxLayout:
                         orientation: 'horizontal'
                         Label:
-                            text: 'label 1'
+                            text: 'start'
                         Button:
-                            text: 'button 2'
-                    BoxLayout:
-                        orientation: 'horizontal'
-                        Label:
-                            text: 'label 2'
-                        Button:
-                            text: 'button 2'
-                    BoxLayout:
-                        orientation: 'horizontal'
-                        Label:
-                            text: 'label 3'
-                        Button:
-                            text: 'button 2'
-                    BoxLayout:
-                        orientation: 'horizontal'
-                        Label:
-                            text: 'label 4'
-                        Button:
-                            text: 'button 2'
+                            text: ''
+                            on_press: app.force_game_ready()
+
+#                    BoxLayout:
+#                        orientation: 'horizontal'
+#                        Label:
+#                            text: 'blank'
+#                        Button:
+#                            text: ''
+
 
         AccordionItemSection:
             id: main_accordion

@@ -55,6 +55,9 @@ class GetModConfig(amp.Command):
 class ForceUpdateConfig(amp.Command):
     response = []
 
+class ForceGameReady(amp.Command):
+    response = []
+
 # class StartExperiment(amp.Command):
 #     response = [('started', amp.Boolean())]
 
@@ -161,128 +164,6 @@ class AddPoint(amp.Command):
 # main actions
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
-
-class SetButtonHover(amp.Command): # TO SERVER
-    arguments = [('button', amp.String()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class SetButtonHovered(amp.Command): # FROM SERVER
-    arguments = [('button', amp.String()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class SetButtonHoverLeave(amp.Command): # TO SERVER
-    arguments = [('button', amp.String()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class SetButtonHoverLeft(amp.Command): # FROM SERVER
-    arguments = [('button', amp.String()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class SetButtonPress(amp.Command): # TO SERVER
-    arguments = [('button', amp.String())]
-    response = []
-
-class SetButtonPressed(amp.Command): # FROM SERVER
-    arguments = [('button', amp.String())]
-    response = []
-
-class ColorButtonHover(amp.Command): # TO SERVER
-    arguments = [('button', amp.Integer()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class ColorButtonHovered(amp.Command): # FROM SERVER
-    arguments = [('button', amp.Integer()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class ColorButtonHoverLeave(amp.Command): # TO SERVER
-    arguments = [('button', amp.Integer()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class ColorButtonHoverLeft(amp.Command): # FROM SERVER
-    arguments = [('button', amp.Integer()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class ColorButtonPress(amp.Command): # TO SERVER
-    arguments = [('button', amp.Integer())]
-    response = []
-
-class ColorButtonPressed(amp.Command): # FROM SERVER
-    arguments = [('button', amp.Integer())]
-    response = []
-
-
-class SizeButtonHover(amp.Command): # TO SERVER
-    arguments = [('button', amp.Integer()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class SizeButtonHovered(amp.Command): # FROM SERVER
-    arguments = [('button', amp.Integer()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class SizeButtonHoverLeave(amp.Command): # TO SERVER
-    arguments = [('button', amp.Integer()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class SizeButtonHoverLeft(amp.Command): # FROM SERVER
-    arguments = [('button', amp.Integer()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class SizeButtonPress(amp.Command): # TO SERVER
-    arguments = [('button', amp.Integer())]
-    response = []
-
-class SizeButtonPressed(amp.Command): # FROM SERVER
-    arguments = [('button', amp.Integer())]
-    response = []
-
-    #########################################
-
-class ShapeButtonHover(amp.Command):  # TO SERVER
-    arguments = [('button', amp.Integer()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class ShapeButtonHovered(amp.Command):  # FROM SERVER
-    arguments = [('button', amp.Integer()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class ShapeButtonHoverLeave(amp.Command):  # TO SERVER
-    arguments = [('button', amp.Integer()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class ShapeButtonHoverLeft(amp.Command):  # FROM SERVER
-    arguments = [('button', amp.Integer()),
-                 ('forced', amp.Boolean())]
-    response = []
-
-class ShapeButtonPress(amp.Command):  # TO SERVER
-    arguments = [('button', amp.Integer())]
-    response = []
-
-class ShapeButtonPressed(amp.Command):  # FROM SERVER
-    arguments = [('button', amp.Integer())]
-    response = []
-
-class CompositeButtonPress(amp.Command):
-    response = []
-
-class CompositeButtonPressed(amp.Command):
-    response = []
 
 
 ###########################################

@@ -695,6 +695,10 @@ class AdminApp(App):
         max_value = self.get_float_from_spec('max', spec_item)
         return BoxLayoutItemFloat(section, section_item, item_value, min_value, max_value)
 
+    @staticmethod
+    def force_game_ready():
+        fac.p.force_game_ready()
+
 class AdminAMP(amp.AMP):
     """
     Admin with a customized Assynchronous Messaging Protocol.
@@ -740,6 +744,9 @@ class AdminAMP(amp.AMP):
         # def start(self, source):
         #     # DO STUFF TO START HERE
         #     return {}
+
+    def force_game_ready(self):
+        self.callRemote(cmd.ForceGameReady)
 
 class AdminFactory(_InstanceFactory):
     """Factory used by ClientCreator, using ClientAMP protocol."""

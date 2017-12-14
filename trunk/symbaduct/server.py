@@ -228,10 +228,11 @@ class Protocol(amp.AMP):
     @cmd.ReadyPlayers.responder
     def ready_players(self):
         fac.start_session()
-        for p in fac.players.itervalues():
+
+        for p in fac.get_players_and_observer():
             p.callRemote(cmd.GameReady)
-        for p in fac.observers.itervalues():
-            p.callRemote(cmd.GameReady)
+        # for p in fac.observers.itervalues():
+        #     p.callRemote(cmd.GameReady)
         return {}
 
     @cmd.AddAdmin.responder
@@ -280,6 +281,13 @@ class Protocol(amp.AMP):
         #                     player=self.client_count,
         #                     points=fac.points)
         return {}
+
+
+    # ADMIN METHODS
+
+    @cmd.ForceGameReady.responder
+    def force_game_ready(self):
+        self.ready_players()
 
     # @cmd.SetButtonHover.responder
     # def set_button_hover(self, button, forced):
@@ -667,6 +675,14 @@ class SymbaductFactory(Factory):
             p.callRemote(cmd.AddPoint,
                          player=player,
                          points=self.points)
+
+
+
+    # ADMIN STUFF
+
+    # def force_game_ready(self):
+    #     for p in self.get_players_and_observer():
+    #         p.callRemote(cmd.GameReady)
 
     #
     # def record_choice(self, player): #CHOICE
