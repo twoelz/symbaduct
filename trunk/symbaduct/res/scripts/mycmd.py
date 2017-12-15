@@ -20,7 +20,9 @@ class AddClient(amp.Command):
                 ('reason', amp.Unicode()),
                 ('ready', amp.Boolean()),
                 ('player_count', amp.Integer()),
-                ('experiment_pickle', amp.String())]
+                ('experiment_pickle', amp.String()),
+                ('conditions_pickle', amp.String()),
+                ]
 
 class ReadyPlayers(amp.Command):
     response = []
@@ -84,14 +86,25 @@ class ForceGameReady(amp.Command):
 class GameReady(amp.Command):
     response = []
 
+
 class PlayerLeft(amp.Command):
     response = []
+
 
 class AddPoint(amp.Command):
     arguments = [('player', amp.Integer()),
                  ('points', amptypes.TypedList(amp.Integer()))]
     response = []
 
+
+class ShowAdj(amp.Command):
+    arguments = [('show', amp.Boolean())]
+    response = []
+
+
+class RefBack(amp.Command):
+    arguments = [('ref_back_pickle', amp.String())]
+    response = []
 
 # class NotifyEnd(amp.Command):
 #     # arguments = [('end_experiment', amp.Boolean()),
@@ -173,27 +186,27 @@ class EndSession(amp.Command):   # FROM SERVER - TO ALL
     arguments = [('status', amp.String())]
     response = []
 
-class StartFeedback(amp.Command): # FROM SERVER - TO ALL
-    arguments = [('points', amp.Integer()),
-                 ('total_points', amp.Integer()),
-                 ('reset_color', amp.Integer()),
-                 ('reset_shape', amp.Integer()),
-                 ('reset_size', amp.Integer()),
-                 ]
-    response = []
+# class StartFeedback(amp.Command): # FROM SERVER - TO ALL
+#     arguments = [('points', amp.Integer()),
+#                  ('total_points', amp.Integer()),
+#                  ('reset_color', amp.Integer()),
+#                  ('reset_shape', amp.Integer()),
+#                  ('reset_size', amp.Integer()),
+#                  ]
+#     response = []
 
-class RestartChoice(amp.Command):  # FROM SERVER - TO ALL
-    response = []
-
-class ChangePoints(amp.Command):  # FROM SERVER - TO ALL
-    response = []
+# class RestartChoice(amp.Command):  # FROM SERVER - TO ALL
+#     response = []
+#
+# class ChangePoints(amp.Command):  # FROM SERVER - TO ALL
+#     response = []
 
     ##############################
 ## OBSERVER EVENTS
 
-class UpdateObserver(amp.Command): # FROM SERVER - TO OBSERVER
-    arguments = [('cycle', amp.Integer()),
-                 ('percent_correct', amp.Float()),
-                 ('consec_correct', amp.Integer()),
-                 ]
-    response = []
+# class UpdateObserver(amp.Command): # FROM SERVER - TO OBSERVER
+#     arguments = [('cycle', amp.Integer()),
+#                  ('percent_correct', amp.Float()),
+#                  ('consec_correct', amp.Integer()),
+#                  ]
+#     response = []

@@ -495,16 +495,12 @@ class AdminApp(App):
         #                  'valid_sizes': self.root.ids.valid_sizes}
 
         self.sections = OrderedDict()
-        self.sections['main'] = self.root.ids.main
+        self.sections['conditions'] = self.root.ids.main
         self.sections['save'] = self.root.ids.save
-        self.sections['end_criteria'] = self.root.ids.end_criteria
-        self.sections['performance_criteria'] = self.root.ids.performance_criteria
 
         self.accordion_sections = OrderedDict()
-        self.accordion_sections['main'] = self.root.ids.main_accordion
+        self.accordion_sections['conditions'] = self.root.ids.main_accordion
         self.accordion_sections['save'] = self.root.ids.save_accordion
-        self.accordion_sections['end_criteria'] = self.root.ids.end_criteria_accordion
-        self.accordion_sections['performance_criteria'] = self.root.ids.performance_criteria_accordion
 
         cfg.mod = {}
 
@@ -589,7 +585,6 @@ class AdminApp(App):
             self.send_mod_config()
         fac.p.force_update_config()
         self.check_send_button()
-        print 'force update'
 
     def mod_config_received(self):
         for k in cfg.mod.iterkeys():
@@ -786,18 +781,8 @@ def main():
                                           'log%s.txt' % LOCALTIME))
 
     load_cfg()
-
-
-
-    # KV BUILDERS
-    # with codecs.open(os.path.join(RESDIR,
-    #                        'scripts',
-    #                        'kv',
-    #                        'client.kv'), 'r', 'utf-8') as f:
-    #     Builder.load_string(f.read().format(**dict(cfg.widgets_text.dict(),
-    #                                                input_conn_ip=HOST,
-    #                                                input_conn_port=PORT)))
     AdminApp().run()
+
 
 cfg = Container()
 fac = None

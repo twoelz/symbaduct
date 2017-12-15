@@ -311,6 +311,8 @@ class ScreenGame(Screen):
     ref_g = NumericProperty(1.0)
     ref_b = NumericProperty(1.0)
     ref_a = NumericProperty(1.0)
+    adj_overlay = NumericProperty(0.0)
+    ref_overlay = NumericProperty(0.0)
     ref_coin_size = 1.0
     ref_coin_reduce = True
     ref_coin_count = 5
@@ -333,13 +335,6 @@ class ScreenGame(Screen):
 
         if obs:
             self.disable_buttons()
-
-
-    def start_update(self):
-
-        self.coin_anim()
-
-        # self.update_event = Clock.schedule_interval(self.update, 0.01)
 
     def coin_anim(self, adj=False):
 
@@ -376,7 +371,6 @@ class ScreenGame(Screen):
 
         point_label.text = str(points)
 
-
         Clock.schedule_once(lambda dt: self.clear_plus(adj=adj), 0.25)
 
 
@@ -393,60 +387,52 @@ class ScreenGame(Screen):
         # obs here: disable all buttons (currently disabled by checking obs)
         pass
 
-    def test_player_count(self, player_count):
+    def add_player_count(self, player_count):
         self.ids.label_game_message.text = str(player_count)
-        if player_count == 0:
-            pass
 
-            # self.adj_r = 1.0
-            # self.adj_g = 0.5
-            # self.adj_b = 0.5
-            # self.adj_a = 1.0
-            # self.ref_r = 0.5
-            # self.ref_g = 0.5
-            # self.ref_b = 1.0
-            # self.ref_a = 1.0
+    def fix_layout(self):
 
-    def set_layout(self, button, initial_fix=False):
+        # DO STUFF HERE TO SETUP CONDITION
         pass
 
-    def update(self, dt):
 
-        print 'hi'
-
-        if self.ref_coin_size <= 0.5:
-            self.ref_coin_reduce = False
-
-        if self.ref_coin_size >= 1.0:
-            self.ref_coin_reduce = True
-
-        if self.ref_coin_reduce:
-            self.ref_coin_size -= 0.01
-        else:
-            self.ref_coin_size += 0.01
-
-        print self.ref_coin_size
-
-
-
-        ref_coin = self.ids.ref_coin
-
-        if not self.ref_coin_started:
-            self.ref_coin_started = True
-            # ref_coin.mipmap = False
-
-        ref_coin.width = ref_coin.parent.height * self.ref_coin_size
-        ref_coin.height = ref_coin.parent.height * self.ref_coin_size
-
-
-        if self.ref_coin_size >= 1.0:
-            self.ref_coin_count -= 1
-            if self.ref_coin_count == 0:
-                Clock.unschedule(self.update_event)
-                ref_coin.width = ref_coin.parent.height
-                ref_coin.height = ref_coin.parent.height
-                self.ref_coin_started = False
-                # ref_coin.mipmap = True
+    # def update(self, dt):
+    #
+    #     print 'hi'
+    #
+    #     if self.ref_coin_size <= 0.5:
+    #         self.ref_coin_reduce = False
+    #
+    #     if self.ref_coin_size >= 1.0:
+    #         self.ref_coin_reduce = True
+    #
+    #     if self.ref_coin_reduce:
+    #         self.ref_coin_size -= 0.01
+    #     else:
+    #         self.ref_coin_size += 0.01
+    #
+    #     print self.ref_coin_size
+    #
+    #
+    #
+    #     ref_coin = self.ids.ref_coin
+    #
+    #     if not self.ref_coin_started:
+    #         self.ref_coin_started = True
+    #         # ref_coin.mipmap = False
+    #
+    #     ref_coin.width = ref_coin.parent.height * self.ref_coin_size
+    #     ref_coin.height = ref_coin.parent.height * self.ref_coin_size
+    #
+    #
+    #     if self.ref_coin_size >= 1.0:
+    #         self.ref_coin_count -= 1
+    #         if self.ref_coin_count == 0:
+    #             Clock.unschedule(self.update_event)
+    #             ref_coin.width = ref_coin.parent.height
+    #             ref_coin.height = ref_coin.parent.height
+    #             self.ref_coin_started = False
+    #             # ref_coin.mipmap = True
 
 
 class ScreenPause(Screen):
@@ -550,7 +536,6 @@ class ScreenManagerMain(ScreenManager):
         fix_window_size()
         self.go_to('game')
 
-        # app = App.get_running_app()
         player_count = app.player_count
         if obs:
             player_count = 'Observer {}'.format(player_count)
@@ -558,16 +543,19 @@ class ScreenManagerMain(ScreenManager):
             print player_count
 
         game_screen = sm.get_screen('game')
-        game_screen.test_player_count(player_count)
+
+        # TODO: REMOVE ME LATER
+        game_screen.add_player_count(player_count)
+
+        game_screen.fix_layout()
+
+
 
         # fix game screen almost as soon as it is shown
         # Clock.schedule_once(app.fix_game_layout, 0.1)
 
         # reset connect screen layout for when we go back to that screen.
         Clock.schedule_once(self.get_screen('connect').reset_layout, 0.2)
-        game_screen.start_update()
-
-
 
 
 
@@ -599,44 +587,6 @@ class HoverButton(Button, HoverBehavior):
     def on_leave(self, *args):
         pass
         # print "You left through this point", self.border_point
-
-
-# class CompositeButton(Button):
-#     def set_image_source(self, shape=1):
-#         self.ids.comp_image.source = 'res/images/{}'.format(cfg.exp['shapes'][str(shape)])
-
-# class SetButton(HoverButton):
-#     pass
-#     # def on_enter(self, *args):
-#     #     self.background_normal = '(0.5, 0.5, 0.5. 1.0)'
-#     #
-#     # def on_leave(self, *args):
-#     #     self.background_normal = ''
-
-# class ParameterButton(HoverButton):
-#     pass
-#
-#
-# class SizeButton(ParameterButton):
-#     size_var = NumericProperty(1)
-#
-# class ShapeButton(ParameterButton):
-#     shape_var = NumericProperty(1)
-#     color_files = DictProperty()
-#     def set_image_source(self, shape=1):
-#         self.ids.shape_image.source = 'res/images/{}'.format(cfg.exp['shapes'][str(shape)])
-#
-#     def selected(self):
-#         if self.ids.shape_image.color != [0, 0, 0, 1]:
-#             self.ids.shape_image.color = [0, 0, 0, 1]
-#
-#     def unselected(self):
-#         if self.ids.shape_image.color != [0.5, 0.5, 0.5, 1]:
-#             self.ids.shape_image.color = [0.5, 0.5, 0.5, 1]
-#
-# class ColorButton(ParameterButton):
-#     color_var = NumericProperty(1)
-
 
 class ClientAMP(amp.AMP):
     """
@@ -680,11 +630,6 @@ class ClientAMP(amp.AMP):
         App.get_running_app().player_left()
         # DO STUFF HERE (PAUSE GAME?)
         return {}
-        #
-        # @cmd.StartSession.responder
-        # def start(self, source):
-        #     # DO STUFF TO START HERE
-        #     return {}
 
     @cmd.EndSession.responder
     def end_session(self, status):
@@ -692,6 +637,19 @@ class ClientAMP(amp.AMP):
         # TODO: block game
 
         sm.session_end(status)
+        return {}
+
+    @cmd.ShowAdj.responder
+    def show_adj(self, show):
+        print 'received show adj:', show
+        app.show_adj(show)
+        return {}
+
+    @cmd.RefBack.responder
+    def ref_back(self, ref_back_pickle):
+        print 'received ref back pickle:', ref_back_pickle
+        ref_back = pickle.loads(ref_back_pickle)
+        app.change_back(ref_back, 0)
         return {}
 
     @cmd.AddPoint.responder
@@ -708,151 +666,6 @@ class ClientAMP(amp.AMP):
 
     def point_press(self):
         self.callRemote(cmd.PointPress)
-
-
-    # @cmd.StartFeedback.responder
-    # def start_feedback(self, points, total_points, reset_color, reset_shape, reset_size):
-    #     App.get_running_app().start_feedback(points, total_points, reset_color, reset_shape, reset_size)
-    #     return {}
-    #
-    # @cmd.RestartChoice.responder
-    # def restart_choice(self):
-    #     App.get_running_app().restart_choice()
-    #     return {}
-    #
-    # @cmd.UpdateObserver.responder
-    # def update_observer(self, cycle, percent_correct, consec_correct):
-    #     App.get_running_app().update_observer(cycle, percent_correct, consec_correct)
-    #     return {}
-    #
-    # @cmd.ChangePoints.responder
-    # def change_points(self):
-    #     App.get_running_app().change_points()
-    #     return {}
-    #
-    # def set_button_hover(self, button, forced):
-    #     self.callRemote(cmd.SetButtonHover,
-    #                     button=button,
-    #                     forced=forced)
-    #
-    # @cmd.SetButtonHovered.responder
-    # def set_button_hovered(self, button, forced):
-    #     App.get_running_app().set_button_hovered(button, forced)
-    #     return {}
-    #
-    # def set_button_hover_leave(self, button, forced):
-    #     self.callRemote(cmd.SetButtonHoverLeave,
-    #                     button=button,
-    #                     forced=forced)
-    #
-    # @cmd.SetButtonHoverLeft.responder
-    # def set_button_hover_left(self, button, forced):
-    #     App.get_running_app().set_button_hover_left(button, forced)
-    #     return {}
-    #
-    # def set_button_press(self, button):
-    #     self.callRemote(cmd.SetButtonPress,
-    #                     button=button)
-    #
-    # @cmd.SetButtonPressed.responder
-    # def set_button_pressed(self, button):
-    #     App.get_running_app().set_button_pressed(button)
-    #     return{}
-    #
-    # def color_button_hover(self, button, forced):
-    #     self.callRemote(cmd.ColorButtonHover,
-    #                     button=button,
-    #                     forced=forced)
-    #
-    # @cmd.ColorButtonHovered.responder
-    # def color_button_hovered(self, button, forced):
-    #     App.get_running_app().color_button_hovered(button, forced)
-    #     return {}
-    #
-    # def color_button_hover_leave(self, button, forced):
-    #     self.callRemote(cmd.ColorButtonHoverLeave,
-    #                     button=button,
-    #                     forced=forced)
-    #
-    # @cmd.ColorButtonHoverLeft.responder
-    # def color_button_hover_left(self, button, forced):
-    #     App.get_running_app().color_button_hover_left(button, forced)
-    #     return {}
-    #
-    # def color_button_press(self, button):
-    #     self.callRemote(cmd.ColorButtonPress,
-    #                     button=button)
-    #
-    # @cmd.ColorButtonPressed.responder
-    # def color_button_pressed(self, button):
-    #     App.get_running_app().color_button_pressed(button)
-    #     return{}
-    #
-    # def size_button_hover(self, button, forced):
-    #     self.callRemote(cmd.SizeButtonHover,
-    #                     button=button,
-    #                     forced=forced)
-    #
-    # @cmd.SizeButtonHovered.responder
-    # def size_button_hovered(self, button, forced):
-    #     App.get_running_app().size_button_hovered(button, forced)
-    #     return {}
-    #
-    # def size_button_hover_leave(self, button, forced):
-    #     self.callRemote(cmd.SizeButtonHoverLeave,
-    #                     button=button,
-    #                     forced=forced)
-    #
-    # @cmd.SizeButtonHoverLeft.responder
-    # def size_button_hover_left(self, button, forced):
-    #     App.get_running_app().size_button_hover_left(button, forced)
-    #     return {}
-    #
-    # def size_button_press(self, button):
-    #     self.callRemote(cmd.SizeButtonPress,
-    #                     button=button)
-    #
-    # @cmd.SizeButtonPressed.responder
-    # def size_button_pressed(self, button):
-    #     App.get_running_app().size_button_pressed(button)
-    #     return{}
-    #
-    # def shape_button_hover(self, button, forced):
-    #     self.callRemote(cmd.ShapeButtonHover,
-    #                     button=button,
-    #                     forced=forced)
-    #
-    # @cmd.ShapeButtonHovered.responder
-    # def shape_button_hovered(self, button, forced):
-    #     App.get_running_app().shape_button_hovered(button, forced)
-    #     return {}
-    #
-    # def shape_button_hover_leave(self, button, forced):
-    #     self.callRemote(cmd.ShapeButtonHoverLeave,
-    #                     button=button,
-    #                     forced=forced)
-    #
-    # @cmd.ShapeButtonHoverLeft.responder
-    # def shape_button_hover_left(self, button, forced):
-    #     App.get_running_app().shape_button_hover_left(button, forced)
-    #     return {}
-    #
-    # def shape_button_press(self, button):
-    #     self.callRemote(cmd.ShapeButtonPress,
-    #                     button=button)
-    #
-    # @cmd.ShapeButtonPressed.responder
-    # def shape_button_pressed(self, button):
-    #     App.get_running_app().shape_button_pressed(button)
-    #     return{}
-    #
-    # def composite_button_press(self):
-    #     self.callRemote(cmd.CompositeButtonPress)
-    #
-    # @cmd.CompositeButtonPressed.responder
-    # def composite_button_pressed(self):
-    #     App.get_running_app().composite_button_pressed()
-    #     return {}
 
 class ClientFactory(_InstanceFactory):
     """Factory used by ClientCreator, using ClientAMP protocol."""
@@ -885,13 +698,6 @@ class ClientFactory(_InstanceFactory):
 class ClientApp(App):
 
     player_count = None
-    # active_set = 'color'
-    # active_color = 1
-    # active_shape = 1
-    # active_size = 1
-    # reset_color = 1
-    # reset_shape = 1
-    # reset_size = 1
 
     freeze = False
     sound = {}
@@ -902,6 +708,8 @@ class ClientApp(App):
 
     ref_points = 0
     adj_points = 0
+
+    adj = False
 
     def build(self):
         global sm
@@ -919,7 +727,6 @@ class ClientApp(App):
         self.sound['point change'] = [SoundLoader.load('res/sounds/coinshake.wav') for _ in xrange(5)]
         self.sound['start choice'] = [SoundLoader.load('res/sounds/swosh.wav') for _ in xrange(5)]
         self.sound['button press'] = [SoundLoader.load('res/sounds/button.wav') for _ in xrange(5)]
-
 
         if obs:
             self.title = 'Observer'
@@ -945,21 +752,6 @@ class ClientApp(App):
     #         button_widget = getattr(sm.get_screen('game').color_parameters_layout.ids, 'color_{}'.format(button))
     #         button_widget.background_color = cfg.exp['colors'][str(button)]
     #
-    #     active_shape = getattr(gm.shape_parameters_layout.ids, 'shape_{}'.format(self.active_shape))
-    #     active_shape.selected()
-    #
-    #     composite_button = gm.ids.composite_button
-    #
-    #     min_size = min(composite_button.parent.height / 7 * self.active_size,
-    #                    composite_button.parent.width / 7 * self.active_size)
-    #     composite_button.height = min_size
-    #     composite_button.width = min_size
-    #
-    #     composite_button.set_image_source(self.active_shape)
-    #     composite_button.ids.comp_image.color = cfg.exp['colors'][str(self.active_color)]
-    #
-    #     # TODO: get from score
-    #     gm.ids.point_label.text = '0'
     #
     #     # fix game layout
     #
@@ -1002,8 +794,14 @@ class ClientApp(App):
         ready = result['ready']
         player_count = result['player_count']
         self.player_count = player_count
+        if self.player_count:
+            self.adj = True
+
         if added:
+            # TODO: see if these two are needed at all
             cfg.exp = pickle.loads(result['experiment_pickle'])
+            cfg.conds = pickle.loads(result['conditions_pickle'])
+
             if ready:
                 fac.client.ready_players()
             else:
@@ -1098,294 +896,12 @@ class ClientApp(App):
             stout.close()
         self.stop()
 
-    # def set_button_hover(self, button, forced=False):
-    #     if obs or self.freeze:
-    #         return
-    #     fac.client.set_button_hover(button, forced)
-    #     # self.set_button_hovered(button, forced)
-    #
-    # def set_button_hovered(self, button, forced=False):
-    #     if forced:
-    #         pass
-    #     elif self.active_set == button:
-    #         return
-    #
-    #     button_widget = getattr(sm.get_screen('game').ids, 'set_{}'.format(button))
-    #     button_widget.size = button_widget.parent.size
-    #
-    #     if not self.active_set == button:
-    #         self.set_button_hover_leave(self.active_set)
-    #
-    # def set_button_hover_leave(self, button, forced=False):
-    #     if obs or self.freeze:
-    #         return
-    #     fac.client.set_button_hover_leave(button, forced)
-    #
-    # def set_button_hover_left(self, button, forced=False):
-    #     if forced:
-    #         pass
-    #     elif self.active_set == button:
-    #         return
-    #
-    #     button_widget = getattr(sm.get_screen('game').ids, 'set_{}'.format(button))
-    #     smaller = win_cfg['game layout']['set buttons smaller']
-    #
-    #     button_widget.width = int(button_widget.parent.width * smaller)
-    #     button_widget.height = int(button_widget.parent.height * smaller)
-    #
-    #     self.set_button_hover(self.active_set, forced=True)
-    #
-    # def set_button_press(self, button):
-    #     if obs or self.freeze:
-    #         return
-    #     fac.client.set_button_press(button)
-    #     # self.set_button_pressed(button)
-    #
-    # def set_button_pressed(self, button):
-    #     if self.active_set == button:
-    #         return
-    #     self.sound['button press'].play()
-    #     previous = self.active_set
-    #     self.active_set = button
-    #     self.set_button_hover_leave(previous, forced=True)
-    #     self.set_layout()
-    #
-    # def color_button_hover(self, button, forced=False):
-    #     if obs or self.freeze:
-    #         return
-    #     fac.client.color_button_hover(button, forced)
-    #
-    # def color_button_hovered(self, button, forced):
-    #     if forced:
-    #         pass
-    #     elif self.active_color == button:
-    #         return
-    #
-    #     lay = sm.get_screen('game').color_parameters_layout
-    #
-    #     smaller = win_cfg['game layout']['set buttons smaller']
-    #     for i in xrange(1, 8):
-    #         if not i == int(button) and not i == self.active_color:
-    #             other_button_widget = getattr(lay.ids, 'color_{}'.format(i))
-    #             other_button_widget.width = int(other_button_widget.parent.height * smaller)
-    #             other_button_widget.height = int(other_button_widget.parent.height * smaller)
-    #
-    #     button_widget = getattr(lay.ids, 'color_{}'.format(button))
-    #     button_widget.width = button_widget.parent.height
-    #     button_widget.height = button_widget.parent.height
-    #
-    # def color_button_hover_leave(self, button, forced=False):
-    #     if obs or self.freeze:
-    #         return
-    #     fac.client.color_button_hover_left(button, forced)
-    #
-    # def color_button_hover_left(self, button, forced):
-    #     if forced:
-    #         pass
-    #     elif self.active_color == button:
-    #         return
-    #
-    #     lay = sm.get_screen('game').color_parameters_layout
-    #
-    #     button_widget = getattr(lay.ids, 'color_{}'.format(button))
-    #
-    #     smaller = win_cfg['game layout']['set buttons smaller']
-    #     button_widget.width = int(button_widget.parent.height * smaller)
-    #     button_widget.height = int(button_widget.parent.height * smaller)
-    #
-    #     self.color_button_hovered(self.active_color, forced=True)
-    #
-    # def color_button_press(self, button):
-    #     if obs or self.freeze:
-    #         return
-    #     # self.color_button_pressed(button)
-    #     fac.client.color_button_press(button)
-    #
-    # def color_button_pressed(self, button, silence=False):
-    #     if self.active_color == button:
-    #         return
-    #     previous = self.active_color
-    #     self.active_color = button
-    #     self.color_button_hover_left(previous, forced=True)
-    #     sm.get_screen('game').ids.composite_button.ids.comp_image.color = cfg.exp['colors'][str(button)]
-    #     if not silence:
-    #         self.sound['button press'].play()
-    #
-    # def size_button_hover(self, button, forced=False):
-    #     if obs or self.freeze:
-    #         return
-    #     fac.client.size_button_hover(button, forced)
-    #
-    # def size_button_hovered(self, button, forced):
-    #     if forced:
-    #         pass
-    #     elif self.active_size == button:
-    #         return
-    #
-    #     lay = sm.get_screen('game').size_parameters_layout
-    #     for i in xrange(1, 8):
-    #         if not i == int(button) and not i == self.active_size:
-    #             other_button_widget = getattr(lay.ids, 'size_{}'.format(i))
-    #             other_button_widget.background_color = 1, 1, 1, 0.7
-    #
-    #     button_widget = getattr(sm.get_screen('game').size_parameters_layout.ids, 'size_{}'.format(button))
-    #     button_widget.background_color = 0.5, 0.5, 0.5, 1
-    #
-    # def size_button_hover_leave(self, button, forced=False):
-    #     if obs or self.freeze:
-    #         return
-    #     fac.client.size_button_hover_leave(button, forced)
-    #
-    # def size_button_hover_left(self, button, forced):
-    #     if forced:
-    #         pass
-    #     elif self.active_size == button:
-    #         return
-    #
-    #     button_widget = getattr(sm.get_screen('game').size_parameters_layout.ids, 'size_{}'.format(button))
-    #     button_widget.background_color = 1, 1, 1, 0.7
-    #
-    #     self.size_button_hovered(self.active_size, forced=True)
-    #
-    # def size_button_press(self, button):
-    #     if obs or self.freeze:
-    #         return
-    #     fac.client.size_button_press(button)
-    #
-    # def size_button_pressed(self, button, silence=False):
-    #
-    #     if self.active_size == button:
-    #         return
-    #     previous = self.active_size
-    #     self.active_size = button
-    #     self.size_button_hover_left(previous, forced=True)
-    #
-    #     composite_button = sm.get_screen('game').ids.composite_button
-    #
-    #     min_size = min(composite_button.parent.height / 7 * button,
-    #                    composite_button.parent.width / 7 * button)
-    #     composite_button.height = min_size
-    #     composite_button.width = min_size
-    #     if not silence:
-    #         self.sound['button press'].play()
-    #
-    # def shape_button_hover(self, button, forced=False):
-    #     if obs or self.freeze:
-    #         return
-    #     fac.client.shape_button_hover(button, forced)
-    #
-    # def shape_button_hovered(self, button, forced):
-    #     if forced:
-    #         pass
-    #     elif self.active_shape == button:
-    #         return
-    #
-    #     lay = sm.get_screen('game').shape_parameters_layout
-    #
-    #     smaller = win_cfg['game layout']['set buttons smaller']
-    #     for i in xrange(1, 8):
-    #         if not i == int(button) and not i == self.active_shape:
-    #             other_button_widget = getattr(lay.ids, 'shape_{}'.format(i))
-    #             other_button_widget.width = int(other_button_widget.parent.height * smaller)
-    #             other_button_widget.height = int(other_button_widget.parent.height * smaller)
-    #
-    #     button_widget = getattr(sm.get_screen('game').shape_parameters_layout.ids, 'shape_{}'.format(button))
-    #     button_widget.width = button_widget.parent.height
-    #     button_widget.height = button_widget.parent.height
-    #
-    #     # if not self.active_shape == button:
-    #     #     self.shape_button_hover_leave(self.active_shape)
-    #
-    # def shape_button_hover_leave(self, button, forced=False):
-    #     if obs or self.freeze:
-    #         return
-    #     fac.client.shape_button_hover_leave(button, forced)
-    #
-    # def shape_button_hover_left(self, button, forced):
-    #     if forced:
-    #         pass
-    #     elif self.active_shape == button:
-    #         return
-    #
-    #     button_widget = getattr(sm.get_screen('game').shape_parameters_layout.ids, 'shape_{}'.format(button))
-    #
-    #     smaller = win_cfg['game layout']['set buttons smaller']
-    #     button_widget.width = int(button_widget.parent.height * smaller)
-    #     button_widget.height = int(button_widget.parent.height * smaller)
-    #
-    #     self.shape_button_hovered(self.active_shape, forced=True)
-    #
-    # def shape_button_press(self, button):
-    #     if obs or self.freeze:
-    #         return
-    #     fac.client.shape_button_press(button)
-    #
-    # def shape_button_pressed(self, button, silence=False):
-    #
-    #     if self.active_shape == button:
-    #         return
-    #     previous = self.active_shape
-    #     self.active_shape = button
-    #     self.shape_button_hover_left(previous, forced=True)
-    #     sm.get_screen('game').ids.composite_button.set_image_source(self.active_shape)
-    #     for button in xrange(1, 8):
-    #         button_widget = getattr(sm.get_screen('game').shape_parameters_layout.ids, 'shape_{}'.format(button))
-    #         if button == self.active_shape:
-    #             button_widget.selected()
-    #         else:
-    #             button_widget.unselected()
-    #     if not silence:
-    #         self.sound['button press'].play()
-    #
-    # def composite_button_press(self):
-    #     if obs or self.freeze:
-    #         return
-    #     self.freeze = True
-    #     fac.client.composite_button_press()
-    #
-    # def composite_button_pressed(self):
-    #     print 'composite was pressed'
-    #     self.set_freeze(True)
-    #     sm.get_screen('game').ids.composite_button.background_down = ''
-    #     self.sound['button press'].play()
 
     def set_freeze(self, freeze=True):
-        # gm = sm.get_screen('game')
         if freeze:
             self.freeze = True
-            # gm.r, gm.g, gm.b, gm.a = FEEDBACK_BACKGROUND_COLOR
-            # sm.get_screen('game').ids.composite_button.background_down = \
-            #     'res/images/transparent.png'
         else:
             self.freeze = False
-            # gm.r, gm.g, gm.b, gm.a = BACKGROUND_COLOR
-            # sm.get_screen('game').ids.composite_button.background_down = \
-            #     'res/images/30gray.png'
-
-    # def start_feedback(self, points, total_points, reset_color, reset_shape, reset_size):
-    #     self.total_points = total_points # to update later
-    #     self.reset_color = reset_color
-    #     self.reset_shape = reset_shape
-    #     self.reset_size = reset_size
-    #     if points > 0:
-    #         self.points_added = True
-    #     else:
-    #         self.points_added = False
-    #
-    #     gm = sm.get_screen('game')
-    #
-    #     if self.points_added:
-    #         gm.ids.add_point_label.text = '+ {}'.format(points)
-    #         self.sound['point added'].play()
-    #     else:
-    #         gm.ids.add_point_label.text = '{}'.format(points)
-
-    # def restart_choice(self):
-    #     self.set_freeze(False)
-    #     self.sound['start choice'].play()
-    #     self.color_button_pressed(self.reset_color, silence=True)
-    #     self.shape_button_pressed(self.reset_shape, silence=True)
-    #     self.size_button_pressed(self.reset_size, silence=True)
 
     def update_observer(self, cycle, percent_correct, consec_correct):
         self.observer_message = u'cycle: {}\npercent: {}\nconsec: {}'.format(cycle, percent_correct, consec_correct)
@@ -1396,6 +912,54 @@ class ClientApp(App):
     def point_press(self):
 
         fac.client.point_press()
+
+    def show_adj(self, show):
+        gm = sm.get_screen('game')
+        if self.adj:
+            gm.adj_overlay = 0
+            if show:
+                gm.ref_overlay = 0
+            else:
+                gm.ref_overlay = 1
+        else:
+            gm.ref_overlay = 0
+            if show:
+                gm.adj_overlay = 0
+            else:
+                gm.adj_overlay = 1
+
+    def change_back(self, back, player):
+        # TO DO: move color changing stuff to game screen
+        if self.adj:
+            self.change_adj_back(back)
+        else:
+            self.change_ref_back(back)
+
+    @staticmethod
+    def change_ref_back(back):
+        gm = sm.get_screen('game')
+        if back == "":
+            # TODO: put appropriate color
+            pass
+        elif len(back) == 4:
+            gm.ref_r = back[0]
+            gm.ref_g = back[1]
+            gm.ref_b = back[2]
+            gm.ref_a = back[3]
+
+    @staticmethod
+    def change_adj_back(back):
+        gm = sm.get_screen('game')
+        if back == "":
+            # TODO: put appropriate color
+            pass
+        elif len(back) == 4:
+            gm.adj_r = back[0]
+            gm.adj_g = back[1]
+            gm.adj_b = back[2]
+            gm.adj_a = back[3]
+
+
 
     def add_point(self, player, points):
         adj = False
@@ -1412,139 +976,11 @@ class ClientApp(App):
 
         sm.get_screen('game').coin_anim(adj)
 
-        # self.adj_points += 1
-        # self.adj_points += 1
-        # gm = sm.get_screen('game')
-        # gm.coin_anim()
 
 
 
-        # self.sound['point change'].play()
-
-        # gm = sm.get_screen('game')
-        # gm.ids.point_label.text = '{}'.format(self.total_points)
-        # gm.ids.add_point_label.text = ''
-        # if self.points_added:
-        #     self.sound['point change'].play()
-    #
-    # def press_right(self):
-    #     self.pressed_right()
-    #
-    # def pressed_right(self):
-    #     if self.active_set == 'color':
-    #         self.set_button_press('shape')
-    #     elif self.active_set == 'shape':
-    #         self.set_button_press('size')
-    #     elif self.active_set == 'size':
-    #         pass
-    #
-    # def press_left(self):
-    #     self.pressed_left()
-    #
-    # def pressed_left(self):
-    #     if self.active_set == 'color':
-    #         pass
-    #     elif self.active_set == 'shape':
-    #         self.set_button_press('color')
-    #     elif self.active_set == 'size':
-    #         self.set_button_press('shape')
-    #
-    # def press_up(self):
-    #     self.pressed_up()
-    #
-    # def pressed_up(self):
-    #     if self.active_set == 'color':
-    #         self.press_up_color()
-    #     elif self.active_set == 'shape':
-    #         self.press_up_shape()
-    #     elif self.active_set == 'size':
-    #         self.press_up_size()
-    #
-    # def press_down(self):
-    #     self.pressed_down()
-    #
-    # def pressed_down(self):
-    #     if self.active_set == 'color':
-    #         self.press_down_color()
-    #     elif self.active_set == 'shape':
-    #         self.press_down_shape()
-    #     elif self.active_set == 'size':
-    #         self.press_down_size()
-    #
-    # def press_up_color(self):
-    #     self.pressed_up_color()
-    #
-    # def pressed_up_color(self):
-    #     if self.active_color == 1:
-    #         return
-    #     self.color_button_press(self.active_color - 1)
-    #
-    # def press_down_color(self):
-    #     self.pressed_down_color()
-    #
-    # def pressed_down_color(self):
-    #     if self.active_color == 7:
-    #         return
-    #     self.color_button_press(self.active_color + 1)
-    #
-    # def press_up_shape(self):
-    #     self.pressed_up_shape()
-    #
-    # def pressed_up_shape(self):
-    #     if self.active_shape == 1:
-    #         return
-    #     self.shape_button_press(self.active_shape - 1)
-    #
-    # def press_down_shape(self):
-    #     self.pressed_down_shape()
-    #
-    # def pressed_down_shape(self):
-    #     if self.active_shape == 7:
-    #         return
-    #     self.shape_button_press(self.active_shape + 1)
-    #
-    # def press_up_size(self):
-    #     self.pressed_up_size()
-    #
-    # def pressed_up_size(self):
-    #     if self.active_size == 1:
-    #         return
-    #     self.size_button_press(self.active_size - 1)
-    #
-    # def press_down_size(self):
-    #     self.pressed_down_size()
-    #
-    # def pressed_down_size(self):
-    #     if self.active_size == 7:
-    #         return
-    #     self.size_button_press(self.active_size + 1)
-
-    def press_enter(self):
-        self.pressed_enter()
-
-    def pressed_enter(self):
-        self.composite_button_press()
-
-    def set_layout(self, initial_fix=False):
-        sm.get_screen('game').set_layout(self.active_set, initial_fix)
-
-    # def fix_color_layout(self, *args):
-    #     passs
-    #     # fixes to color layout
-    #     self.color_button_hover(self.active_color, forced=True)
-    #     # sm.get_screen('game').ids.comp_image.color = cfg.exp['colors'][str(self.active_color)]
-
-    # def fix_size_layout(self, *args):
-    #     # fixes to color layout
-    #     self.size_button_hover(self.active_size, forced=True)
-    #
-    # def fix_shape_layout(self, *args):
-    #     self.shape_button_hover(self.active_shape, forced=True)
-    #     for button in xrange(1, 8):
-    #         button_widget = getattr(sm.get_screen('game').shape_parameters_layout.ids, 'shape_{}'.format(button))
-    #         button_widget.set_image_source(button)
-
-
+    # def set_layout(self, initial_fix=False):
+    #     sm.get_screen('game').set_layout(self.active_set, initial_fix)
 
 
 def load_cfg():

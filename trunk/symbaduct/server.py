@@ -89,6 +89,11 @@ def shutdown():
     reactor.stop()
 
 
+def text_to_list(text):
+    text = text.replace(' ', '')
+    return text.split(',')
+
+
 class Protocol(amp.AMP):
     def __init__(self, *args, **kwargs):
         super(Protocol, self).__init__(*args, **kwargs)
@@ -160,9 +165,10 @@ class Protocol(amp.AMP):
         if fac.session_started:
             # TODO: move below to fac method?
             fac.session_started = False
-            if len(fac.players) < cfg.exp['main']['players']:
+            # if len(fac.players) < cfg.exp['main']['players']:
+            if len(fac.players) < 2:
                 fac.accept_player = True
-            # TODO: reset cycle stuff here (or call method for it)
+            # TODO: reset stuff here (or call method for it)
             for p in fac.players.itervalues():
                 p.callRemote(cmd.PlayerLeft)
             for p in fac.observers.itervalues():
@@ -198,14 +204,17 @@ class Protocol(amp.AMP):
             fac.obs_in = True
             self.observer = True
 
-        elif fac.accept_player and len(fac.players) < cfg.exp['main']['players']:
+        # elif fac.accept_player and len(fac.players) < cfg.exp['main']['players']:
+        elif fac.accept_player and len(fac.players) < 2:
             print 'got a new player'
 
             while player_count in fac.players.keys():
                 player_count += 1
             self.client_count = player_count
             fac.players[player_count] = self
-            if len(fac.players) == cfg.exp['main']['players']:
+
+            # if len(fac.players) == cfg.exp['main']['players']:
+            if len(fac.players) == 2:
                 print 'ready!'
                 ready = True
                 fac.accept_player = False
@@ -215,7 +224,6 @@ class Protocol(amp.AMP):
             reason = cfg.s_msg['server full']
 
         print 'current players:', len(fac.players)
-        print cfg.exp['main']['players']
         print 'was accepted?', accept
         print 'is ready?', ready
         print 'player count?', type(player_count), player_count
@@ -223,7 +231,8 @@ class Protocol(amp.AMP):
                 'reason': reason,
                 'ready': ready,
                 'player_count': player_count,
-                'experiment_pickle': pickle.dumps(cfg.exp)}
+                'experiment_pickle': pickle.dumps(cfg.exp),
+                'conditions_pickle': pickle.dumps(cfg.conds)}
 
     @cmd.ReadyPlayers.responder
     def ready_players(self):
@@ -287,7 +296,9 @@ class Protocol(amp.AMP):
 
     @cmd.ForceGameReady.responder
     def force_game_ready(self):
-        self.ready_players()
+        if len(fac.players):
+            self.ready_players()
+        return {}
 
     # @cmd.SetButtonHover.responder
     # def set_button_hover(self, button, forced):
@@ -419,6 +430,8 @@ class Protocol(amp.AMP):
     #     return {}
 
 
+
+
 class SymbaductFactory(Factory):
     '''A factory that creates and holds data and protocol instances.'''
     protocol = Protocol
@@ -442,29 +455,22 @@ class SymbaductFactory(Factory):
         # experiment variables
 
         self.points = [0, 0]
-        self.count_click = [0, 0]
+        self.count_ratio_click = [0, 0]
+        self.conditions = text_to_list(cfg.exp['conditions']['conditions'])
+        self.ref_schedule = []
+        self.adj_schedule = []
+        self.point_criteria_counter = 0
+
         # options: ratio, interval, (?)
         self.schedule = ['interval', 'ratio']
         self.ratio = [5, 5]
         self.interval = [3.0, 3.0]
 
-        # self.active_set = 'color'
-        # self.active_color = 1
-        # self.active_shape = 1
-        # self.active_size = 1
-        # self.n_correct = 0
-        # self.points = 0
-        # self.total_points = 0
-        #
-        # self.reset_color = self.active_color
-        # self.reset_shape = self.active_shape
-        # self.reset_size = self.active_size
-
         # time variables
         self.hour = '-'.join([str(x) for x in time.localtime()[:4]])
         self.time_started = time.time()
         self.now = 0
-        self.time_cycle = self.now
+        self.time_click = self.now
         self.event = 0
         self.previous_event = self.event
         self.time_press = [0, 0]
@@ -472,22 +478,21 @@ class SymbaductFactory(Factory):
         self.time_previous_point_press = [0, 0]
         self.time_point_press = [0, 0]
         self.time_schedule = [0, 0]
-        # self.time_start_choice = 0
-        # self.time_choice = 0
 
         # end variables
         self.end = False
         self.end_reason = ''
-
-        # observer variables
-        # self.percent_correct = 0.0
-        # self.consec_correct = 0
 
         # to be defined @ create output
         self.output_path = ''
         self.line = {}
 
         self.create_output()
+
+    # def get_conditions(self):
+    #     cond = cfg.exp['conditions']['conditions']
+    #     cond = cond.replace(' ', '')
+    #     return cond.split(',')
 
     def set_time(self, event=True):
         self.now = time.time() - self.time_started
@@ -503,10 +508,75 @@ class SymbaductFactory(Factory):
         self.event = 0
         self.previous_event = 0
         self.session_started = True
-        if cfg.exp['end_criteria']['use session duration']:
-            expire_delay = cfg.exp['durations']['session'] * 60
-            self.delay_calls['expire session'] = reactor.callLater(expire_delay, self.expire_session)
         self.record_session_start()
+        self.start_condition()
+
+    def start_condition(self):
+        condition_name = self.conditions[cfg.exp['save']['condition'] - 1]
+        cfg.cond = cfg.conds[condition_name].dict()
+        self.ref_schedule = text_to_list(cfg.cond['ref schedules'])
+        self.adj_schedule = text_to_list(cfg.cond['adj schedules'])
+        self.fix_condition_settings()
+        self.start_part()
+
+    def start_part(self):
+        self.fix_part_settings()
+
+    def end_part(self):
+        # TODO: record end part
+        part = cfg.exp['save']['part']
+        if part >= cfg.cond['parts']:
+            self.end_condition()
+        else:
+            cfg.exp['save']['part'] += 1
+            self.start_part()
+
+    def end_condition(self):
+        # TODO: check if condition is last condition - if yes end program
+        cfg.exp['save']['part'] = 1
+        cfg.exp['save']['condition'] += 1
+        # TODO: start pause or go straight if settings tells it to
+        self.start_condition()
+
+
+    def fix_condition_settings(self):
+        for p in self.get_players_and_observer():
+            p.callRemote(cmd.ShowAdj,
+                         show=cfg.cond['show adj']).addErrback(bailout)
+    def fix_part_settings(self):
+        # send background colors
+        part = cfg.exp['save']['part']
+
+        # if part is larger than parts, set last part
+        if part > cfg.cond['parts']:
+            part = cfg.cont['parts']
+
+        ref_back = text_to_list(cfg.cond['ref back'])
+        if len(ref_back) == 1:
+            ref_back = ref_back[0]
+        else:
+            ref_back = ref_back[part-1]
+        if not ref_back == '':
+            ref_back = cfg.exp['colors'][ref_back]
+
+        for p in self.get_players_and_observer():
+            p.callRemote(cmd.RefBack,
+                         ref_back_pickle=pickle.dumps(ref_back)).addErrback(bailout)
+
+        # SETUP REF SCHED
+        ref_sched = text_to_list(cfg.cond['ref schedules'])
+        ref_sched = ref_sched[part-1]
+        print 'ref_sched', ref_sched
+
+        if 'FR' in ref_sched:
+            self.schedule[0] = 'ratio'
+            self.ratio[0] = int(ref_sched.replace('FR', ''))
+        elif 'FI' in ref_sched:
+            self.schedule[0] = 'interval'
+            self.interval[0] = float(ref_sched.replace('FI', ''))
+        else:
+
+            raise Exception('invalid schedule configuration for Ref')
 
     def create_output(self):
         ''' creates the output file '''
@@ -523,7 +593,9 @@ class SymbaductFactory(Factory):
         l = ['hour',
              'event',
              'description',
-             'cycle',
+             'all_click',
+             'ref_click',
+             'adj_click',
              'player',
              'response',
              u't_start',
@@ -539,7 +611,9 @@ class SymbaductFactory(Factory):
             hour='',
             event='',
             description='',
-            cycle='',
+            all_click='',
+            ref_click='',
+            adj_click='',
             player='',
             response='',
             t_start='',
@@ -561,7 +635,9 @@ class SymbaductFactory(Factory):
             d['hour'],
             d['event'],
             d['description'],
-            d['cycle'],
+            d['all_click'],
+            d['ref_click'],
+            d['adj_click'],
             d['player'],
             d['response'],
             d['t_start'],
@@ -653,15 +729,22 @@ class SymbaductFactory(Factory):
         add_point = False
 
         schedule = self.schedule[player]
+
+        if player == 0:
+            cfg.exp['save']['ref clicks'] += 1
+        else:
+            cfg.exp['save']['adj clicks'] += 1
+        cfg.exp.write()
+
         if schedule == 'ratio':
-
-            self.count_click[player] += 1
-
-            if self.count_click[player] == self.ratio[player]:
-                self.count_click[player] = 0
+            self.count_ratio_click[player] += 1
+            if self.count_ratio_click[player] == self.ratio[player]:
+                self.count_ratio_click[player] = 0
                 add_point = True
 
+
         elif schedule == 'interval':
+            self.count_ratio_click[player] = 0
             if self.now - self.time_schedule[player] >= self.interval[player]:
                 self.time_schedule[player] = self.now
                 add_point = True
@@ -675,6 +758,14 @@ class SymbaductFactory(Factory):
             p.callRemote(cmd.AddPoint,
                          player=player,
                          points=self.points)
+        if player == 0:
+            self.point_criteria_counter += 1
+            if self.point_criteria_counter >= cfg.cond['end criteria']:
+                self.point_criteria_counter = 0
+                self.end_part()
+
+
+
 
 
 
@@ -840,7 +931,6 @@ class SymbaductFactory(Factory):
                     event='end session',
                     hour=self.hour,
                     description=reason,
-                    cycle=cfg.exp['save']['cycle'] + 1,
                     t_start=n_uni(0),
                     t_response=n_uni(self.now),
                     )
@@ -850,7 +940,6 @@ class SymbaductFactory(Factory):
         data = dict(self.line,
                     event='start session',
                     hour=self.hour,
-                    cycle=cfg.exp['save']['cycle'] + 1,
                     t_start=n_uni(0))
         self.record_line(**data)
 
@@ -1002,12 +1091,19 @@ def main():
     save_dir_files = [x for x in os.listdir(save_dir) if '.ini' in x]
 
     experiment_filename = group + '_experiment.ini'
+    conditions_filename = group + '_conditions.ini'
     contains_experiment = experiment_filename in save_dir_files
+    contains_conditions = conditions_filename in save_dir_files
 
-    if contains_experiment:
+    if contains_experiment and contains_conditions:
         cfg.exp = ConfigObj(infile=os.path.join(save_dir, experiment_filename),
                             configspec=os.path.join(spec_dir, 'spec_experiment.ini'))
         validate_config(cfg.exp)
+
+        cfg.conds = ConfigObj(infile=os.path.join(save_dir, conditions_filename),
+                              configspec=os.path.join(spec_dir, 'spec_conditions.ini'))
+        validate_config(cfg.conds)
+
 
     else:
         define_experiment = string_to_bool(cfg.server['define experiment'])
@@ -1026,6 +1122,23 @@ def main():
         cfg.exp.initial_comment = ['# experiment: {}\n# group: {}'.format(experiment, group), ' ']
 
         cfg.exp.write()
+
+
+        # validating but PRESERVING comments (set_copy=True also copies spec comments)
+        cfg.conds = ConfigObj(infile=os.path.join(exp_dir, experiment + '_conditions.ini'),
+                              configspec=os.path.join(spec_dir, 'spec_conditions.ini'))
+
+        pre_copy_comments = copy.deepcopy(cfg.conds.comments)
+        pre_copy_final_comment = copy.deepcopy(cfg.conds.final_comment)
+        validate_config(cfg.conds, set_copy=True)
+        cfg.conds.comments = pre_copy_comments
+        cfg.conds.final_comment = pre_copy_final_comment
+
+        cfg.conds.filename = os.path.join(save_dir, conditions_filename)
+        cfg.conds.initial_comment = ['# conditions for experiment: {}\n# group: {}'.format(experiment, group), ' ']
+
+        cfg.conds.write()
+
 
     fac = SymbaductFactory(utostr(group))
     log.startLogging(sys.stdout)

@@ -280,7 +280,19 @@
                         text_size: self.size
                         valign: 'middle' # left aligned though
                         halign: 'left'
-                        text: '+1'
+
+                FloatLayout: # ADJ OVERLAY
+                    id: adj_overlay
+                    width: '388dp'
+                    height: '334dp'
+                    size_hint: None, None
+                    pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
+                    canvas.before:
+                        Color:
+                            rgba: 0.5, 0.5, 0.5, root.adj_overlay
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
 
 
             RelativeLayout: # referent quadrant
@@ -366,7 +378,19 @@
                         text_size: self.size
                         valign: 'middle' # left aligned though
                         halign: 'left'
-                        text: '+1'
+                FloatLayout:# REF OVERLAY
+                    id: ref_overlay
+                    width: '582dp'
+                    height: '501dp'
+                    size_hint: None, None
+                    pos: (self.parent.width-self.width)/2, (self.parent.height-self.height)/2
+                    canvas.before:
+                        Color:
+                            rgba: 0.5, 0.5, 0.5, root.ref_overlay
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+
 
             Label:
                 id: label_game_message
