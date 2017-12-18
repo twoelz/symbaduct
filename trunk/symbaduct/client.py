@@ -288,21 +288,11 @@ class ScreenConnect(Screen):
 class ScreenWait(Screen):
     pass
 
-# class ScreenGameBackground(RelativeLayout):
-#     r = NumericProperty(1.0)
-#     g = NumericProperty(1.0)
-#     b = NumericProperty(1.0)
-#     a = NumericProperty(1.0)
-
 class ScreenGame(Screen):
     r = NumericProperty(BACKGROUND_COLOR[0])
     g = NumericProperty(BACKGROUND_COLOR[1])
     b = NumericProperty(BACKGROUND_COLOR[2])
     a = NumericProperty(BACKGROUND_COLOR[3])
-    # test_r = NumericProperty(0.5)
-    # test_g = NumericProperty(1.0)
-    # test_b = NumericProperty(0.5)
-    # test_a = NumericProperty(1.0)
     adj_r = NumericProperty(1.0)
     adj_g = NumericProperty(1.0)
     adj_b = NumericProperty(1.0)
@@ -324,14 +314,6 @@ class ScreenGame(Screen):
 
     def __init__(self, **kwargs):
         super(ScreenGame, self).__init__(**kwargs)
-
-        # parameter widgets
-        # self.color_parameters_layout = ColorParametersLayout()
-        # self.shape_parameters_layout = ShapeParametersLayout()
-        # self.size_parameters_layout = SizeParametersLayout()
-        # self.unbind_color_buttons_hover()
-        # self.unbind_shape_buttons_hover()
-        # self.unbind_size_buttons_hover()
 
         if obs:
             self.disable_buttons()
@@ -387,8 +369,8 @@ class ScreenGame(Screen):
         # obs here: disable all buttons (currently disabled by checking obs)
         pass
 
-    def add_player_count(self, player_count):
-        self.ids.label_game_message.text = str(player_count)
+    # def add_player_count(self, player_count):
+    #     self.ids.label_game_message.text = str(player_count)
 
     def fix_layout(self):
 
@@ -439,6 +421,9 @@ class ScreenPause(Screen):
     pass
 
 class ScreenEnd(Screen):
+    pass
+
+class ScreenInstruction(Screen):
     pass
 
 class ScreenManagerMain(ScreenManager):
@@ -514,14 +499,8 @@ class ScreenManagerMain(ScreenManager):
         elif obs: # break all below key inputs from observer
             return True
 
-        # elif key == 'right':
-        #     if self.current == 'game':
-        #         App.get_running_app().press_right()
-        #
-        #
-        # elif key == 'enter':
-        #     if self.current == 'game':
-        #         App.get_running_app().press_enter()
+        elif key == 'spacebar' and self.current == 'instruction':
+            app.instruction_press()
 
         return True
 
@@ -544,8 +523,8 @@ class ScreenManagerMain(ScreenManager):
 
         game_screen = sm.get_screen('game')
 
-        # TODO: REMOVE ME LATER
-        game_screen.add_player_count(player_count)
+        # # TODO: REMOVE ME LATER
+        # game_screen.add_player_count(player_count)
 
         game_screen.fix_layout()
 
@@ -625,9 +604,17 @@ class ClientAMP(amp.AMP):
     def ready_players(self):
         self.callRemote(cmd.ReadyPlayers).addErrback(self.disconnect_player)
 
+    def request_instruction_end(self):
+        self.callRemote(cmd.RequestInstructionEnd)
+
     @cmd.GameReady.responder
     def game_ready(self):
         sm.start_game_screen()
+        return {}
+
+    @cmd.InstructionEnd.responder
+    def instruction_end(self):
+        app.instruction_end()
         return {}
 
     @cmd.PlayerLeft.responder
@@ -664,31 +651,34 @@ class ClientAMP(amp.AMP):
 
     @cmd.ShowAdj.responder
     def show_adj(self, show):
-        print 'received show adj:', show
+
         app.show_adj(show)
+        return {}
+
+    @cmd.ShowInstruction.responder
+    def show_instruction(self, ref, target):
+        if app.player_count == 0:
+            instruction = pickle.loads(ref)
+        else:
+            instruction = pickle.loads(target)
+
+        app.show_instruction(instruction)
         return {}
 
     @cmd.RefBack.responder
     def ref_back(self, ref_back_pickle):
-        print 'received ref back pickle:', ref_back_pickle
         ref_back = pickle.loads(ref_back_pickle)
         app.change_back(ref_back, 0)
         return {}
 
     @cmd.AdjBack.responder
     def adj_back(self, adj_back_pickle):
-        print 'received adj back pickle:', adj_back_pickle
         adj_back = pickle.loads(adj_back_pickle)
         app.change_back(adj_back, 1)
         return {}
 
     @cmd.AddPoint.responder
     def add_point(self, player, points):
-
-        if player == 0:
-            print 'PLAYER 1'
-        else: # player == 1
-            print 'PLAYER 2'
 
         app.add_point(player, points)
 
@@ -728,9 +718,6 @@ class ClientFactory(_InstanceFactory):
         del self.client
         self.client = None
 
-
-
-
 class ClientApp(App):
 
     player_count = None
@@ -758,6 +745,7 @@ class ClientApp(App):
         sm.add_widget(ScreenGame(name='game'))
         sm.add_widget(ScreenPause(name='pause'))
         sm.add_widget(ScreenEnd(name='end'))
+        sm.add_widget(ScreenInstruction(name='instruction'))
 
         self.sound['point added'] = [SoundLoader.load('res/sounds/smw_coin.wav') for _ in xrange(5)]
         self.sound['point change'] = [SoundLoader.load('res/sounds/coinshake.wav') for _ in xrange(5)]
@@ -975,6 +963,22 @@ class ClientApp(App):
                 gm.adj_overlay = 0
             else:
                 gm.adj_overlay = 1
+
+    def show_instruction(self, instruction):
+
+        print 'GOT TO SHOW INSTRUCTION ON APP'
+
+        sm.get_screen('instruction').ids.instruction_label.text = instruction
+        sm.go_to('instruction')
+
+    def instruction_press(self):
+        if self.player_count == 0:
+            fac.client.request_instruction_end()
+
+    def instruction_end(self):
+        # TODO: start timing variables here
+
+        sm.go_to('game')
 
     def change_back(self, back, player):
         # TO DO: move color changing stuff to game screen

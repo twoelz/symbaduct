@@ -27,6 +27,9 @@ class AddClient(amp.Command):
 class ReadyPlayers(amp.Command):
     response = []
 
+class RequestInstructionEnd(amp.Command):
+    response = []
+
 class PointPress(amp.Command):
     response = []
 
@@ -100,6 +103,8 @@ class ForceUnPause(amp.Command):
 class GameReady(amp.Command):
     response = []
 
+class InstructionEnd(amp.Command):
+    response = []
 
 class PlayerLeft(amp.Command):
     response = []
@@ -118,6 +123,12 @@ class AddPoint(amp.Command):
 
 class ShowAdj(amp.Command):
     arguments = [('show', amp.Boolean())]
+    response = []
+
+class ShowInstruction(amp.Command):
+    arguments = [('ref', amp.String()),
+                 ('target', amp.String())]
+
     response = []
 
 

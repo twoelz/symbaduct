@@ -233,12 +233,19 @@ class Protocol(amp.AMP):
     def ready_players(self):
         if fac.session_started:
             return {}
-        fac.start_session()
-
         for p in fac.get_players_and_observer():
             p.callRemote(cmd.GameReady)
+
+        fac.start_session()
+
         # for p in fac.observers.itervalues():
         #     p.callRemote(cmd.GameReady)
+        return {}
+
+    @cmd.RequestInstructionEnd.responder
+    def request_instruction_end(self):
+        for p in fac.get_players_and_observer():
+            p.callRemote(cmd.InstructionEnd)
         return {}
 
     @cmd.AddAdmin.responder
@@ -482,6 +489,10 @@ class SymbaductFactory(Factory):
         # fn_status: 0 = lower, 2 = higher, 1 = default/middle
         self.fn_status = 1
 
+        self.fn_reduce_change = 0
+        self.fn_increase_change = 0
+        self.fn_total_change = 0
+
 
         self.fn_change = None
         # fn_change = None means first choice lowers
@@ -552,6 +563,10 @@ class SymbaductFactory(Factory):
         self.ref_back = text_to_list(cfg.cond['ref back'])
         self.adj_back = text_to_list(cfg.cond['adj back'])
 
+        self.fn_reduce_change = 0
+        self.fn_increase_change = 0
+        self.fn_total_change = 0
+
         self.fix_condition_settings()
         self.start_part()
 
@@ -572,36 +587,8 @@ class SymbaductFactory(Factory):
             self.start_condition()
 
     def start_part(self):
-        self.fix_part_settings()
 
-    def end_part(self):
-        # TODO: record end part
-        part = cfg.exp['save']['part']
-        if part >= cfg.cond['parts']:
-            self.end_condition()
-        else:
-            self.count_ratio_click = [0, 0]
-            cfg.exp['save']['part'] += 1
-            self.start_part()
-
-    def end_condition(self):
-        # TODO: check if condition is last condition - if yes end program
-        cfg.exp['save']['part'] = 1
-        cfg.exp['save']['condition'] += 1
-
-        if cfg.cond['pause']:
-            self.condition_ended = True
-            self.pause_session()
-        else:
-            self.condition_ended = False
-            self.start_condition()
-
-    def fix_condition_settings(self):
-        for p in self.get_players_and_observer():
-            p.callRemote(cmd.ShowAdj,
-                         show=cfg.cond['show adj']).addErrback(bailout)
-
-    def fix_part_settings(self):
+        self.fn_change = None
 
         part = self.get_part()
 
@@ -646,6 +633,53 @@ class SymbaductFactory(Factory):
                 raise Exception('invalid schedule configuration for Adj')
 
         self.fix_trial_settings()
+
+    def end_part(self):
+        # TODO: record end part
+        part = cfg.exp['save']['part']
+        if part >= cfg.cond['parts']:
+            self.end_condition()
+        else:
+            self.count_ratio_click = [0, 0]
+            cfg.exp['save']['part'] += 1
+            self.start_part()
+
+    def end_condition(self):
+        # TODO: check if condition is last condition - if yes end program
+        cfg.exp['save']['part'] = 1
+
+        self.check_condition_move()
+
+        if cfg.cond['pause']:
+            self.condition_ended = True
+            self.pause_session()
+        else:
+            self.condition_ended = False
+            self.start_condition()
+
+    def check_condition_move(self):
+        if cfg.cond['stay based on fn change']:
+            if self.fn_total_change == 0:
+                # stay in condition (no change made)
+                return
+            if float(self.fn_reduce_change) / float(self.fn_total_change) <= cfg.cond['min reduce fn change']:
+                # stay in condition (equal or less then minimum reduce change)
+                return
+        # move on
+        cfg.exp['save']['condition'] += 1
+
+
+    def fix_condition_settings(self):
+        for p in self.get_players_and_observer():
+            p.callRemote(cmd.ShowAdj,
+                         show=cfg.cond['show adj']).addErrback(bailout)
+        if cfg.cond['use instruction']:
+            print "USE INSTRUCTION!"
+            instruction = cfg.cond['instruction']
+            for p in self.get_players_and_observer():
+                p.callRemote(cmd.ShowInstruction,
+                             ref=pickle.dumps(cfg.instructions[instruction]['ref']),
+                             target=pickle.dumps(cfg.instructions[instruction]['target'])).addErrback(bailout)
 
 
     def fix_trial_settings(self, fix_schedule=False):
@@ -906,13 +940,19 @@ class SymbaductFactory(Factory):
                     self.fn_change = 1
                 else:
                     self.fn_change = 0
-            if fn == 'f' and self.fn_change == 1 \
-                or fn == 'n' and self.fn_change == 0:
+            fn_change = self.fn_change
+            if self.fn_invert:
+                fn_change = 1 - fn_change
+            if fn == 'f' and fn_change == 1 \
+                or fn == 'n' and fn_change == 0:
+                self.fn_reduce_change += 1
                 # lowers
                 # fn_status: 0 = lower, 2 = higher, 1 = default/middle
                 new_fn_status = max(self.fn_status - 1, 0)
             else: # raises
+                self.fn_increase_change += 1
                 new_fn_status = min(self.fn_status + 1, 2)
+            self.fn_total_change += 1
             if new_fn_status != self.fn_status:
                 self.fn_status = new_fn_status
                 self.fix_trial_settings(fix_schedule=True)
@@ -927,12 +967,6 @@ class SymbaductFactory(Factory):
             p.callRemote(cmd.AddPoint,
                          player=player,
                          points=self.points)
-        if self.fn_change is not None:
-            self.fn_invert_counter += 1
-            if cfg.cond['invert fn']:
-                if self.fn_invert_counter >= cfg.cond['invert fn after']:
-                    self.fn_invert_counter = 0
-                    self.fn_invert = not self.fn_invert
         if player == 0:
             # if cfg.cond['type'] == 'fn-self':
             #     self.reset_fn_status(player)
@@ -941,19 +975,16 @@ class SymbaductFactory(Factory):
                 self.point_criteria_counter = 0
                 self.end_part()
         if 'fn' in cfg.cond['type']:
-            self.reset_fn_status()
-        # elif player == 1:
-        #     if cfg.cond['type'] == 'fn-target':
-        #         self.reset_fn_status(player)
-
-    # def reset_fn_status(self, player):
-    #     self.fn_status = 1
-    #     # change background
-    #     if player == 0:
-    #         self.fix_ref_color()
-    #     else:
-    #         self.fix_adj_color()
-
+            if player == 1 and 'target' in cfg.cond['type'] or \
+                    player == 0 and 'self' in cfg.cond['type']:
+                if self.fn_change is not None:
+                    self.fn_invert_counter += 1
+                    if cfg.cond['invert fn']:
+                        if self.fn_invert_counter >= cfg.cond['invert fn after']:
+                            print 'inverting now'
+                            self.fn_invert_counter = 0
+                            self.fn_invert = not self.fn_invert
+                self.reset_fn_status()
 
     def reset_fn_status(self):
         self.fn_status = 1
@@ -1224,10 +1255,12 @@ def main():
 
     experiment_filename = group + '_experiment.ini'
     conditions_filename = group + '_conditions.ini'
+    instructions_filename = group + '_instructions.ini'
     contains_experiment = experiment_filename in save_dir_files
     contains_conditions = conditions_filename in save_dir_files
+    contains_instructions = instructions_filename in save_dir_files
 
-    if contains_experiment and contains_conditions:
+    if contains_experiment and contains_conditions and contains_instructions:
         cfg.exp = ConfigObj(infile=os.path.join(save_dir, experiment_filename),
                             configspec=os.path.join(spec_dir, 'spec_experiment.ini'))
         validate_config(cfg.exp)
@@ -1236,6 +1269,11 @@ def main():
                               configspec=os.path.join(spec_dir, 'spec_conditions.ini'))
         validate_config(cfg.conds)
 
+        cfg.instructions = ConfigObj(infile=os.path.join(save_dir, instructions_filename),
+                                     configspec=os.path.join(spec_dir, 'spec_instructions.ini'),
+                                     encoding='UTF8')
+        validate_config(cfg.instructions)
+
 
     else:
         define_experiment = string_to_bool(cfg.server['define experiment'])
@@ -1243,7 +1281,7 @@ def main():
         cfg.exp = ConfigObj(infile=os.path.join(exp_dir, experiment + '.ini'),
                             configspec=os.path.join(spec_dir, 'spec_experiment.ini'))
 
-        # validating but PRESERVING comments (set_copy=True also copies spec comments)
+        # EXPERIMENT (validating but PRESERVING comments (set_copy=True also copies spec comments))
         pre_copy_comments = copy.deepcopy(cfg.exp.comments)
         pre_copy_final_comment = copy.deepcopy(cfg.exp.final_comment)
         validate_config(cfg.exp, set_copy=True)
@@ -1256,7 +1294,7 @@ def main():
         cfg.exp.write()
 
 
-        # validating but PRESERVING comments (set_copy=True also copies spec comments)
+        # CONDITIONS (validating but PRESERVING comments (set_copy=True also copies spec comments))
         cfg.conds = ConfigObj(infile=os.path.join(exp_dir, experiment + '_conditions.ini'),
                               configspec=os.path.join(spec_dir, 'spec_conditions.ini'))
 
@@ -1270,6 +1308,21 @@ def main():
         cfg.conds.initial_comment = ['# conditions for experiment: {}\n# group: {}'.format(experiment, group), ' ']
 
         cfg.conds.write()
+
+        # INSTRUCTIONS (validating but PRESERVING comments (set_copy=True also copies spec comments))
+        cfg.instructions = ConfigObj(infile=os.path.join(exp_dir, experiment + '_instructions.ini'),
+                                     configspec=os.path.join(spec_dir, 'spec_instructions.ini'))
+
+        pre_copy_comments = copy.deepcopy(cfg.instructions.comments)
+        pre_copy_final_comment = copy.deepcopy(cfg.instructions.final_comment)
+        validate_config(cfg.instructions, set_copy=True)
+        cfg.instructions.comments = pre_copy_comments
+        cfg.instructions.final_comment = pre_copy_final_comment
+
+        cfg.instructions.filename = os.path.join(save_dir, instructions_filename)
+        cfg.instructions.initial_comment = ['# instructions for experiment: {}\n# group: {}'.format(experiment, group), ' ']
+
+        cfg.instructions.write()
 
 
     fac = SymbaductFactory(utostr(group))
