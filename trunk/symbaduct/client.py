@@ -560,8 +560,15 @@ class ScreenManagerMain(ScreenManager):
 
 
     def player_left(self):
-        self.get_screen('pause').ids.pause_label.text = 'PAUSE\nPLAYER LEFT'
+        self.get_screen('pause').ids.pause_label.text = 'PAUSA\nPARTICIPANTE SAIU'
         self.go_to('pause')
+
+    def session_pause(self):
+        self.get_screen('pause').ids.pause_label.text = 'PAUSA\nAVISE O EXPERIMENTADOR'
+        self.go_to('pause')
+
+    def session_unpause(self):
+        self.go_to('game')
 
     def session_end(self, status):
         end_text = u'Sessão encerrada:\n\naguarde o pesquisador'
@@ -627,7 +634,23 @@ class ClientAMP(amp.AMP):
     def player_left(self):
         print 'player has left'
 
-        App.get_running_app().player_left()
+        app.player_left()
+        # DO STUFF HERE (PAUSE GAME?)
+        return {}
+
+    @cmd.PauseSession.responder
+    def pause_session(self):
+        print 'pause'
+
+        app.session_pause()
+        # DO STUFF HERE (PAUSE GAME?)
+        return {}
+
+    @cmd.UnPauseSession.responder
+    def unpause_session(self):
+        print 'unpause'
+
+        app.session_unpause()
         # DO STUFF HERE (PAUSE GAME?)
         return {}
 
@@ -652,6 +675,13 @@ class ClientAMP(amp.AMP):
         app.change_back(ref_back, 0)
         return {}
 
+    @cmd.AdjBack.responder
+    def adj_back(self, adj_back_pickle):
+        print 'received adj back pickle:', adj_back_pickle
+        adj_back = pickle.loads(adj_back_pickle)
+        app.change_back(adj_back, 1)
+        return {}
+
     @cmd.AddPoint.responder
     def add_point(self, player, points):
 
@@ -666,6 +696,12 @@ class ClientAMP(amp.AMP):
 
     def point_press(self):
         self.callRemote(cmd.PointPress)
+
+    def n_press(self):
+        self.callRemote(cmd.NPress)
+
+    def f_press(self):
+        self.callRemote(cmd.FPress)
 
 class ClientFactory(_InstanceFactory):
     """Factory used by ClientCreator, using ClientAMP protocol."""
@@ -889,6 +925,13 @@ class ClientApp(App):
         sm.player_left()
 
 
+    def session_pause(self):
+        # TODO: unschedule stuff
+        sm.session_pause()
+
+    def session_unpause(self):
+        # TODO: reschedule stuff?
+        sm.session_unpause()
 
     def bailout(self, reason):
         reason.printTraceback()
@@ -910,8 +953,13 @@ class ClientApp(App):
 
 
     def point_press(self):
-
         fac.client.point_press()
+
+    def n_press(self):
+        fac.client.n_press()
+
+    def f_press(self):
+        fac.client.f_press()
 
     def show_adj(self, show):
         gm = sm.get_screen('game')
@@ -930,10 +978,18 @@ class ClientApp(App):
 
     def change_back(self, back, player):
         # TO DO: move color changing stuff to game screen
+        change_ref = True
         if self.adj:
-            self.change_adj_back(back)
+            if not player:
+                change_ref = False
         else:
+            if player:
+                change_ref = False
+
+        if change_ref:
             self.change_ref_back(back)
+        else:
+            self.change_adj_back(back)
 
     @staticmethod
     def change_ref_back(back):

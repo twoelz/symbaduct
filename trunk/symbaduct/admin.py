@@ -694,6 +694,14 @@ class AdminApp(App):
     def force_game_ready():
         fac.p.force_game_ready()
 
+    @staticmethod
+    def pause():
+        fac.p.pause()
+
+    @staticmethod
+    def unpause():
+        fac.p.unpause()
+
 class AdminAMP(amp.AMP):
     """
     Admin with a customized Assynchronous Messaging Protocol.
@@ -742,6 +750,12 @@ class AdminAMP(amp.AMP):
 
     def force_game_ready(self):
         self.callRemote(cmd.ForceGameReady)
+
+    def pause(self):
+        self.callRemote(cmd.ForcePause)
+
+    def unpause(self):
+        self.callRemote(cmd.ForceUnPause)
 
 class AdminFactory(_InstanceFactory):
     """Factory used by ClientCreator, using ClientAMP protocol."""

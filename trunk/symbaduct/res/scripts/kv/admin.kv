@@ -36,7 +36,20 @@ BoxLayout:
                         Button:
                             text: ''
                             on_press: app.force_game_ready()
-
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        Label:
+                            text: 'pause'
+                        Button:
+                            text: ''
+                            on_press: app.pause()
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        Label:
+                            text: 'unpause'
+                        Button:
+                            text: ''
+                            on_press: app.unpause()
         AccordionItemSection:
             id: main_accordion
             title: 'conditions'

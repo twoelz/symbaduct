@@ -318,14 +318,14 @@
                             size: self.size
                     PointRefButton:
                         id: point_button
-
-
                     RefButton:
                         pos: ('447dp', '39dp')
                         text: 'f'
+                        on_press: app.f_press()
                     RefButton:
                         pos: ('447dp', '189dp')
                         text: 'n'
+                        on_press: app.n_press()
                     RelativeLayout:
                         size_hint: None, None
                         size: ('237dp', '99dp')

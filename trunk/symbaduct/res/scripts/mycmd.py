@@ -30,6 +30,14 @@ class ReadyPlayers(amp.Command):
 class PointPress(amp.Command):
     response = []
 
+class NPress(amp.Command):
+    response = []
+
+class FPress(amp.Command):
+    response = []
+
+
+
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # observer to server
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -58,6 +66,12 @@ class ForceUpdateConfig(amp.Command):
     response = []
 
 class ForceGameReady(amp.Command):
+    response = []
+
+class ForcePause(amp.Command):
+    response = []
+
+class ForceUnPause(amp.Command):
     response = []
 
 # class StartExperiment(amp.Command):
@@ -90,6 +104,11 @@ class GameReady(amp.Command):
 class PlayerLeft(amp.Command):
     response = []
 
+class UnPauseSession(amp.Command):
+    response = []
+
+class PauseSession(amp.Command):
+    response = []
 
 class AddPoint(amp.Command):
     arguments = [('player', amp.Integer()),
@@ -104,6 +123,10 @@ class ShowAdj(amp.Command):
 
 class RefBack(amp.Command):
     arguments = [('ref_back_pickle', amp.String())]
+    response = []
+
+class AdjBack(amp.Command):
+    arguments = [('adj_back_pickle', amp.String())]
     response = []
 
 # class NotifyEnd(amp.Command):

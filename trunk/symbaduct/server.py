@@ -188,7 +188,6 @@ class Protocol(amp.AMP):
     def add_client(self, observer):
         '''client attempts to connect: server allows it if there is
            a free spot'''
-        print 'try to add client'
         fac.set_time(event=False)
         accept = True
         ready = False
@@ -199,15 +198,12 @@ class Protocol(amp.AMP):
             while player_count in fac.observers.keys():
                 player_count += 1
             self.client_count = player_count
-            print "observer count:", self.client_count
             fac.observers[player_count] = self
             fac.obs_in = True
             self.observer = True
 
         # elif fac.accept_player and len(fac.players) < cfg.exp['main']['players']:
         elif fac.accept_player and len(fac.players) < 2:
-            print 'got a new player'
-
             while player_count in fac.players.keys():
                 player_count += 1
             self.client_count = player_count
@@ -215,7 +211,6 @@ class Protocol(amp.AMP):
 
             # if len(fac.players) == cfg.exp['main']['players']:
             if len(fac.players) == 2:
-                print 'ready!'
                 ready = True
                 fac.accept_player = False
         else:
@@ -236,6 +231,8 @@ class Protocol(amp.AMP):
 
     @cmd.ReadyPlayers.responder
     def ready_players(self):
+        if fac.session_started:
+            return {}
         fac.start_session()
 
         for p in fac.get_players_and_observer():
@@ -291,6 +288,16 @@ class Protocol(amp.AMP):
         #                     points=fac.points)
         return {}
 
+    @cmd.NPress.responder
+    def n_press(self):
+        fac.fn_press(self.client_count, 'n')
+        return {}
+
+    @cmd.FPress.responder
+    def f_press(self):
+        fac.fn_press(self.client_count, 'f')
+        return {}
+
 
     # ADMIN METHODS
 
@@ -298,6 +305,16 @@ class Protocol(amp.AMP):
     def force_game_ready(self):
         if len(fac.players):
             self.ready_players()
+        return {}
+
+    @cmd.ForcePause.responder
+    def force_pause(self):
+        fac.pause_session()
+        return {}
+
+    @cmd.ForceUnPause.responder
+    def force_unpause(self):
+        fac.unpause_session()
         return {}
 
     # @cmd.SetButtonHover.responder
@@ -460,6 +477,21 @@ class SymbaductFactory(Factory):
         self.ref_schedule = []
         self.adj_schedule = []
         self.point_criteria_counter = 0
+        self.fn_invert = False
+        self.fn_invert_counter = 0
+        # fn_status: 0 = lower, 2 = higher, 1 = default/middle
+        self.fn_status = 1
+
+
+        self.fn_change = None
+        # fn_change = None means first choice lowers
+        # fn_change = 1 means f lowers, n raises
+        # fn_change = 0 means f raises, n lowers
+
+        # STATUSES
+        self.condition_ended = False
+        self.paused = False
+
 
         # options: ratio, interval, (?)
         self.schedule = ['interval', 'ratio']
@@ -516,8 +548,28 @@ class SymbaductFactory(Factory):
         cfg.cond = cfg.conds[condition_name].dict()
         self.ref_schedule = text_to_list(cfg.cond['ref schedules'])
         self.adj_schedule = text_to_list(cfg.cond['adj schedules'])
+
+        self.ref_back = text_to_list(cfg.cond['ref back'])
+        self.adj_back = text_to_list(cfg.cond['adj back'])
+
         self.fix_condition_settings()
         self.start_part()
+
+    def pause_session(self):
+        if self.paused:
+            return
+        self.paused = True
+        for p in self.get_players_and_observer():
+            p.callRemote(cmd.PauseSession).addErrback(bailout)
+
+    def unpause_session(self):
+        if not self.paused:
+            return
+        self.paused = False
+        for p in self.get_players_and_observer():
+            p.callRemote(cmd.UnPauseSession).addErrback(bailout)
+        if self.condition_ended:
+            self.start_condition()
 
     def start_part(self):
         self.fix_part_settings()
@@ -528,6 +580,7 @@ class SymbaductFactory(Factory):
         if part >= cfg.cond['parts']:
             self.end_condition()
         else:
+            self.count_ratio_click = [0, 0]
             cfg.exp['save']['part'] += 1
             self.start_part()
 
@@ -535,38 +588,34 @@ class SymbaductFactory(Factory):
         # TODO: check if condition is last condition - if yes end program
         cfg.exp['save']['part'] = 1
         cfg.exp['save']['condition'] += 1
-        # TODO: start pause or go straight if settings tells it to
-        self.start_condition()
 
+        if cfg.cond['pause']:
+            self.condition_ended = True
+            self.pause_session()
+        else:
+            self.condition_ended = False
+            self.start_condition()
 
     def fix_condition_settings(self):
         for p in self.get_players_and_observer():
             p.callRemote(cmd.ShowAdj,
                          show=cfg.cond['show adj']).addErrback(bailout)
+
     def fix_part_settings(self):
-        # send background colors
-        part = cfg.exp['save']['part']
 
-        # if part is larger than parts, set last part
-        if part > cfg.cond['parts']:
-            part = cfg.cont['parts']
-
-        ref_back = text_to_list(cfg.cond['ref back'])
-        if len(ref_back) == 1:
-            ref_back = ref_back[0]
-        else:
-            ref_back = ref_back[part-1]
-        if not ref_back == '':
-            ref_back = cfg.exp['colors'][ref_back]
-
-        for p in self.get_players_and_observer():
-            p.callRemote(cmd.RefBack,
-                         ref_back_pickle=pickle.dumps(ref_back)).addErrback(bailout)
+        part = self.get_part()
 
         # SETUP REF SCHED
-        ref_sched = text_to_list(cfg.cond['ref schedules'])
-        ref_sched = ref_sched[part-1]
-        print 'ref_sched', ref_sched
+        ref_sched = self.ref_schedule[:]
+
+        if cfg.cond['type'] == 'sequence':
+            ref_sched = ref_sched[part-1]
+        elif cfg.cond['type'] == 'fn-self':
+            ref_sched = ref_sched[1]
+        elif cfg.cond['type'] == 'fn-target':
+            ref_sched = ref_sched[0]
+        else:
+            raise Exception('condition type unknown')
 
         if 'FR' in ref_sched:
             self.schedule[0] = 'ratio'
@@ -575,8 +624,104 @@ class SymbaductFactory(Factory):
             self.schedule[0] = 'interval'
             self.interval[0] = float(ref_sched.replace('FI', ''))
         else:
-
             raise Exception('invalid schedule configuration for Ref')
+
+        if cfg.cond['show adj']:
+
+            adj_sched = self.adj_schedule[:]
+            if cfg.cond['type'] in ['sequence','fn-self']:
+                adj_sched = adj_sched[0]
+            elif cfg.cond['type'] == 'fn-target':
+                adj_sched = adj_sched[1]
+            else:
+                raise Exception('condition type unknown')
+
+            if 'FR' in adj_sched:
+                self.schedule[1] = 'ratio'
+                self.ratio[1] = int(adj_sched.replace('FR', ''))
+            elif 'FI' in ref_sched:
+                self.schedule[1] = 'interval'
+                self.interval[1] = float(adj_sched.replace('FI', ''))
+            else:
+                raise Exception('invalid schedule configuration for Adj')
+
+        self.fix_trial_settings()
+
+
+    def fix_trial_settings(self, fix_schedule=False):
+
+        if fix_schedule:
+            self.fix_schedule()
+
+        self.fix_ref_color()
+        if cfg.cond['show adj']:
+            self.fix_adj_color()
+
+    def fix_schedule(self):
+        # only used by fn conditions
+
+        if 'self' in cfg.cond['type']:
+            change_index = 0
+            sched = self.ref_schedule[:]
+        else:
+            change_index = 1
+            sched = self.adj_schedule[:]
+
+        # get specific now
+        sched = sched[self.fn_status]
+
+        if self.schedule[change_index] == 'ratio':
+            self.ratio[change_index] = int(sched.replace('FR', ''))
+        elif self.schedule[change_index] == 'interval':
+            self.interval[change_index] = float(sched.replace('FI', ''))
+
+        # # TODO: CHECK IF RESET OR NOT
+        # self.count_ratio_click[change_index] = 0
+
+    def get_part(self):
+        part = cfg.exp['save']['part']
+        # if part is larger than parts, set last part
+        if part > cfg.cond['parts']:
+            part = cfg.cont['parts']
+        return part
+
+    def fix_ref_color(self):
+        def get_color_index(): # chose part or fn status
+            if cfg.cond['type'] == 'fn-self':
+                return self.fn_status
+            elif cfg.cond['type'] == 'fn-target':
+                return 0
+            return cfg.exp['save']['part'] - 1
+
+        part = self.get_part()
+
+        ref_back = self.ref_back[:]
+
+        if len(ref_back) == 1:
+            ref_back = ref_back[0]
+        else:
+            ref_back = ref_back[get_color_index()]
+        if not ref_back == '':
+            ref_back = cfg.exp['colors'][ref_back]
+
+        for p in self.get_players_and_observer():
+            p.callRemote(cmd.RefBack,
+                         ref_back_pickle=pickle.dumps(ref_back)).addErrback(bailout)
+
+    def fix_adj_color(self):
+
+        adj_back = self.adj_back[:]
+
+        if len(adj_back) == 1:
+            adj_back = adj_back[0]
+        else:
+            adj_back = adj_back[self.fn_status]
+        if not adj_back == '':
+            adj_back = cfg.exp['colors'][adj_back]
+
+        for p in self.get_players_and_observer():
+            p.callRemote(cmd.AdjBack,
+                         adj_back_pickle=pickle.dumps(adj_back)).addErrback(bailout)
 
     def create_output(self):
         ''' creates the output file '''
@@ -595,7 +740,7 @@ class SymbaductFactory(Factory):
              'description',
              'all_click',
              'ref_click',
-             'adj_click',
+             'target_click',
              'player',
              'response',
              u't_start',
@@ -613,7 +758,7 @@ class SymbaductFactory(Factory):
             description='',
             all_click='',
             ref_click='',
-            adj_click='',
+            target_click='',
             player='',
             response='',
             t_start='',
@@ -637,7 +782,7 @@ class SymbaductFactory(Factory):
             d['description'],
             d['all_click'],
             d['ref_click'],
-            d['adj_click'],
+            d['target_click'],
             d['player'],
             d['response'],
             d['t_start'],
@@ -738,10 +883,9 @@ class SymbaductFactory(Factory):
 
         if schedule == 'ratio':
             self.count_ratio_click[player] += 1
-            if self.count_ratio_click[player] == self.ratio[player]:
+            if self.count_ratio_click[player] >= self.ratio[player]:
                 self.count_ratio_click[player] = 0
                 add_point = True
-
 
         elif schedule == 'interval':
             self.count_ratio_click[player] = 0
@@ -752,22 +896,68 @@ class SymbaductFactory(Factory):
         if add_point:
             self.add_point(player)
 
+    def fn_press(self, player, fn):
+        if player > 0:
+            # TODO: record adj click?
+            return
+        if 'fn' in cfg.cond['type']:
+            if self.fn_change is None:
+                if fn == 'f':
+                    self.fn_change = 1
+                else:
+                    self.fn_change = 0
+            if fn == 'f' and self.fn_change == 1 \
+                or fn == 'n' and self.fn_change == 0:
+                # lowers
+                # fn_status: 0 = lower, 2 = higher, 1 = default/middle
+                new_fn_status = max(self.fn_status - 1, 0)
+            else: # raises
+                new_fn_status = min(self.fn_status + 1, 2)
+            if new_fn_status != self.fn_status:
+                self.fn_status = new_fn_status
+                self.fix_trial_settings(fix_schedule=True)
+
+    def change_fn_status(self):
+        for p in self.get_players_and_observer():
+            p.callRemote(cmd.ChangeFnStatus)
+
     def add_point(self, player):
         self.points[player] += 1
         for p in self.get_players_and_observer():
             p.callRemote(cmd.AddPoint,
                          player=player,
                          points=self.points)
+        if self.fn_change is not None:
+            self.fn_invert_counter += 1
+            if cfg.cond['invert fn']:
+                if self.fn_invert_counter >= cfg.cond['invert fn after']:
+                    self.fn_invert_counter = 0
+                    self.fn_invert = not self.fn_invert
         if player == 0:
+            # if cfg.cond['type'] == 'fn-self':
+            #     self.reset_fn_status(player)
             self.point_criteria_counter += 1
-            if self.point_criteria_counter >= cfg.cond['end criteria']:
+            if self.point_criteria_counter >= cfg.cond['end after']:
                 self.point_criteria_counter = 0
                 self.end_part()
+        if 'fn' in cfg.cond['type']:
+            self.reset_fn_status()
+        # elif player == 1:
+        #     if cfg.cond['type'] == 'fn-target':
+        #         self.reset_fn_status(player)
+
+    # def reset_fn_status(self, player):
+    #     self.fn_status = 1
+    #     # change background
+    #     if player == 0:
+    #         self.fix_ref_color()
+    #     else:
+    #         self.fix_adj_color()
 
 
-
-
-
+    def reset_fn_status(self):
+        self.fn_status = 1
+        self.fix_trial_settings(fix_schedule=True)
 
     # ADMIN STUFF
 
@@ -816,17 +1006,7 @@ class SymbaductFactory(Factory):
     #     self.record_line(**data)
     #     print data
 
-    #
-    # def choice_made(self, player):
-    # self.n_correct = 0
-    # if cfg.exp['valid_colors']['color {}'.format(self.active_color)]:
-    #     self.n_correct += 1
-    # if cfg.exp['valid_shapes']['shape {}'.format(self.active_shape)]:
-    #     self.n_correct += 1
-    # if cfg.exp['valid_sizes']['size {}'.format(self.active_size)]:
-    #     self.n_correct += 1
-    # self.points = cfg.exp['game_points']['{} correct'.format(self.n_correct)]
-    # # self.total_points += self.points
+
     #
     #
     # self.record_choice(player)
@@ -850,65 +1030,17 @@ class SymbaductFactory(Factory):
     #                      consec_correct=self.consec_correct,
     #                      ).addErrback(bailout)
 
-    # def check_end_criteria(self):
-    #     cri = cfg.exp['end_criteria']
-    #     win = cfg.exp['save']['window results']
-    #     len_win = len(win)
-    #     true_count = win.count(True)
-    #     # self.percent_correct = float(true_count) / len_win
-    #     # self.consec_correct = 0
-    #     for i in win[::-1]:
-    #         if i:
-    #             self.consec_correct += 1
-    #         else:
-    #             break
-    #     cycle = cfg.exp['save']['cycle']
-    #     if cycle < cri['min cycles']:
-    #         return
-    #     if cycle > cri['max cycles']:
-    #         self.end = True
-    #         self.end_reason += '-max cycles'
-    #     if cri['use performance criteria']:
-    #         per = cfg.exp['performance_criteria']
-    #         if len_win < per['window size']:
-    #             return
-    #         if float(true_count) / len_win >= per['percent correct']:
-    #             consec = per['consecutive correct']
-    #             if consec == 0 or win[-1*consec:].count(False) == 0:
-    #                 self.end = True
-    #                 self.end_reason += '-perf criteria'
     #
     # def start_feedback(self):
     #     for p in self.get_players_and_observer():
     #         p.callRemote(cmd.StartFeedback,
-    #                      points=self.points,
-    #                      total_points=self.total_points,
-    #                      reset_color=self.reset_color,
-    #                      reset_shape=self.reset_shape,
-    #                      reset_size=self.reset_size,
     #                      ).addErrback(bailout)
     #     self.delay_calls['change points'] = reactor.callLater(cfg.exp['durations']['delay change points'],
     #                                                           self.change_points)
     #     self.delay_calls['restart_choice'] = reactor.callLater(cfg.exp['durations']['feedback'],
     #                                                            self.restart_choice)
 
-    # def restart_choice(self):
-    #     if self.end:
-    #         self.end_session(self.end_reason)
-    #         return
-    #     self.set_time()
-    #     self.set_time_press()
-    #     self.time_choice = self.now
-    #     self.active_color = self.reset_color
-    #     self.active_shape = self.reset_shape
-    #     self.active_size = self.reset_size
-    #     self.record_start_choice()
-    #     for p in self.get_players_and_observer():
-    #         p.callRemote(cmd.RestartChoice).addErrback(bailout)
 
-    # def change_points(self):
-    #     for p in self.get_players_and_observer():
-    #         p.callRemote(cmd.ChangePoints).addErrback(bailout)
 
     def expire_session(self):
         if self.end:
