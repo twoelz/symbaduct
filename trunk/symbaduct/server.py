@@ -493,6 +493,8 @@ class SymbaductFactory(Factory):
         self.fn_increase_change = 0
         self.fn_total_change = 0
 
+        self.fn_trial = 0
+        self.fn_trials = []
 
         self.fn_change = None
         # fn_change = None means first choice lowers
@@ -521,6 +523,8 @@ class SymbaductFactory(Factory):
         self.time_previous_point_press = [0, 0]
         self.time_point_press = [0, 0]
         self.time_schedule = [0, 0]
+
+        self.time_add_point = [0, 0]
 
         # end variables
         self.end = False
@@ -555,6 +559,8 @@ class SymbaductFactory(Factory):
         self.start_condition()
 
     def start_condition(self):
+        if self.check_end_experiment():
+            return
         condition_name = self.conditions[cfg.exp['save']['condition'] - 1]
         cfg.cond = cfg.conds[condition_name].dict()
         self.ref_schedule = text_to_list(cfg.cond['ref schedules'])
@@ -567,8 +573,23 @@ class SymbaductFactory(Factory):
         self.fn_increase_change = 0
         self.fn_total_change = 0
 
+        self.fn_trial = 0
+        self.fn_trials = []
+
         self.fix_condition_settings()
         self.start_part()
+
+    def check_end_experiment(self):
+        '''returns True if ended'''
+
+        if cfg.exp['save']['condition'] > len(self.conditions):
+            self.end_experiment()
+            return True
+        return False
+
+    def end_experiment(self):
+        for p in self.get_players_and_observer():
+            p.callRemote(cmd.EndExperiment).addErrback(bailout)
 
     def pause_session(self):
         if self.paused:
@@ -650,6 +671,9 @@ class SymbaductFactory(Factory):
 
         self.check_condition_move()
 
+        if self.check_end_experiment():
+            return
+
         if cfg.cond['pause']:
             self.condition_ended = True
             self.pause_session()
@@ -665,22 +689,27 @@ class SymbaductFactory(Factory):
             if float(self.fn_reduce_change) / float(self.fn_total_change) <= cfg.cond['min reduce fn change']:
                 # stay in condition (equal or less then minimum reduce change)
                 return
+        if cfg.cond['stay based on fn extinction']:
+            min_ext = cfg.cond['min fn extinction trials']
+            if sum(self.fn_trial[-1*min_ext:]) > 0:
+                return
+            ext_window = cfg.cond['fn extinction trials window']
+            ext_window = self.fn_trial[-1*ext_window:]
+            if sum(ext_window) / float(len(ext_window)) > cfg.cond['percentage fn extinction trials']:
+                return
         # move on
         cfg.exp['save']['condition'] += 1
-
 
     def fix_condition_settings(self):
         for p in self.get_players_and_observer():
             p.callRemote(cmd.ShowAdj,
                          show=cfg.cond['show adj']).addErrback(bailout)
         if cfg.cond['use instruction']:
-            print "USE INSTRUCTION!"
             instruction = cfg.cond['instruction']
             for p in self.get_players_and_observer():
                 p.callRemote(cmd.ShowInstruction,
                              ref=pickle.dumps(cfg.instructions[instruction]['ref']),
                              target=pickle.dumps(cfg.instructions[instruction]['target'])).addErrback(bailout)
-
 
     def fix_trial_settings(self, fix_schedule=False):
 
@@ -931,10 +960,13 @@ class SymbaductFactory(Factory):
             self.add_point(player)
 
     def fn_press(self, player, fn):
+        self.set_time()
         if player > 0:
             # TODO: record adj click?
+            # self.record_fn_press(player, fn)
             return
         if 'fn' in cfg.cond['type']:
+            self.fn_trial = 1
             if self.fn_change is None:
                 if fn == 'f':
                     self.fn_change = 1
@@ -943,6 +975,7 @@ class SymbaductFactory(Factory):
             fn_change = self.fn_change
             if self.fn_invert:
                 fn_change = 1 - fn_change
+
             if fn == 'f' and fn_change == 1 \
                 or fn == 'n' and fn_change == 0:
                 self.fn_reduce_change += 1
@@ -953,6 +986,7 @@ class SymbaductFactory(Factory):
                 self.fn_increase_change += 1
                 new_fn_status = min(self.fn_status + 1, 2)
             self.fn_total_change += 1
+            # self.record_fn_press(player, fn, fn_change, new_fn_status)
             if new_fn_status != self.fn_status:
                 self.fn_status = new_fn_status
                 self.fix_trial_settings(fix_schedule=True)
@@ -962,6 +996,8 @@ class SymbaductFactory(Factory):
             p.callRemote(cmd.ChangeFnStatus)
 
     def add_point(self, player):
+        self.set_time()
+        self.time_add_point[player] = self.now
         self.points[player] += 1
         for p in self.get_players_and_observer():
             p.callRemote(cmd.AddPoint,
@@ -981,10 +1017,12 @@ class SymbaductFactory(Factory):
                     self.fn_invert_counter += 1
                     if cfg.cond['invert fn']:
                         if self.fn_invert_counter >= cfg.cond['invert fn after']:
-                            print 'inverting now'
                             self.fn_invert_counter = 0
                             self.fn_invert = not self.fn_invert
                 self.reset_fn_status()
+            self.fn_trials.append(self.fn_trial)
+            self.fn_trial = 0
+
 
     def reset_fn_status(self):
         self.fn_status = 1
@@ -1088,6 +1126,24 @@ class SymbaductFactory(Factory):
             p.callRemote(cmd.EndSession,
                          status=status).addErrback(bailout)
         self.record_end(status)
+
+    def record_fn_press(self, player, fn, fn_change='', fn_status=''):
+        t_start = n_uni(self.time_add_point[player])
+        data = dict(self.line,
+                    event='fn_press',
+                    hour=self.hour,
+                    description="fn change:" + str(fn_change) + " fn status:" + str(fn_status),
+                    # all_click=self.,
+                    ref_click=cfg.exp['save']['ref clicks'],
+                    target_click=cfg.exp['save']['adj clicks'],
+                    player=player,
+                    t_start=n_uni(t_start),
+                    t_response=n_uni(self.now),
+                    latency=n_uni(t_start - self.now),
+                    ref_points='',
+                    target_points=''
+                    )
+        self.record_line(**data)
 
     def record_end(self, reason):
         data = dict(self.line,

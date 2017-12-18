@@ -115,6 +115,9 @@ class UnPauseSession(amp.Command):
 class PauseSession(amp.Command):
     response = []
 
+class EndExperiment(amp.Command):
+    response = []
+
 class AddPoint(amp.Command):
     arguments = [('player', amp.Integer()),
                  ('points', amptypes.TypedList(amp.Integer()))]

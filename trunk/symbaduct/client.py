@@ -550,7 +550,14 @@ class ScreenManagerMain(ScreenManager):
         self.go_to('game')
 
     def session_end(self, status):
-        end_text = u'Sessão encerrada:\n\naguarde o pesquisador'
+        end_text = u'Sessão encerrada:\n\navise o pesquisador'
+        if obs:
+            end_text += u'\n\n{}\n{}'.format(status, App.get_running_app().observer_message)
+        self.get_screen('end').ids.end_label.text = end_text
+        self.go_to('end')
+
+    def end_experiment(self):
+        end_text = u'Pesquisa encerrada:\n\navise o pesquisador'
         if obs:
             end_text += u'\n\n{}\n{}'.format(status, App.get_running_app().observer_message)
         self.get_screen('end').ids.end_label.text = end_text
@@ -647,6 +654,13 @@ class ClientAMP(amp.AMP):
         # TODO: block game
 
         sm.session_end(status)
+        return {}
+
+    @cmd.EndExperiment.responder
+    def end_experiment(self):
+        print 'experiment ended'
+
+        app.end_experiment()
         return {}
 
     @cmd.ShowAdj.responder
@@ -920,6 +934,9 @@ class ClientApp(App):
     def session_unpause(self):
         # TODO: reschedule stuff?
         sm.session_unpause()
+
+    def end_experiment(self):
+        sm.end_experiment()
 
     def bailout(self, reason):
         reason.printTraceback()
