@@ -483,11 +483,14 @@ class SymbaductFactory(Factory):
         self.conditions = text_to_list(cfg.exp['conditions']['conditions'])
         self.ref_schedule = []
         self.adj_schedule = []
-        self.point_criteria_counter = 0
+        self.point_counter = 0
         self.fn_invert = False
         self.fn_invert_counter = 0
         # fn_status: 0 = lower, 2 = higher, 1 = default/middle
         self.fn_status = 1
+
+        # lists for multiple schedule settings
+        self.mult_sched = []
 
         self.fn_reduce_change = 0
         self.fn_increase_change = 0
@@ -569,6 +572,8 @@ class SymbaductFactory(Factory):
         self.ref_back = text_to_list(cfg.cond['ref back'])
         self.adj_back = text_to_list(cfg.cond['adj back'])
 
+        self.point_counter = 0
+
         self.fn_reduce_change = 0
         self.fn_increase_change = 0
         self.fn_total_change = 0
@@ -622,6 +627,10 @@ class SymbaductFactory(Factory):
             ref_sched = ref_sched[1]
         elif cfg.cond['type'] == 'fn-target':
             ref_sched = ref_sched[0]
+        elif cfg.cond['type'] == 'mult':
+            self.start_mult_sched()
+            ref_sched = ref_sched[0]
+            self.fn_status = 0
         else:
             raise Exception('condition type unknown')
 
@@ -637,7 +646,7 @@ class SymbaductFactory(Factory):
         if cfg.cond['show adj']:
 
             adj_sched = self.adj_schedule[:]
-            if cfg.cond['type'] in ['sequence','fn-self']:
+            if cfg.cond['type'] in ['sequence', 'fn-self', 'mult']:
                 adj_sched = adj_sched[0]
             elif cfg.cond['type'] == 'fn-target':
                 adj_sched = adj_sched[1]
@@ -654,6 +663,20 @@ class SymbaductFactory(Factory):
                 raise Exception('invalid schedule configuration for Adj')
 
         self.fix_trial_settings()
+
+    def start_mult_sched(self):
+        self.mult_sched = []
+        ref_sched = self.ref_schedule[:]
+        len_sched = len(ref_sched)
+        range_sched = range(len_sched)
+        for i in range_sched:
+            self.mult_sched.append(i)
+        for j in xrange(1000):
+            random.shuffle(range_sched)
+            while range_sched[0] == self.mult_sched[-1]:
+                random.shuffle(range_sched)
+            for i in range_sched:
+                self.mult_sched.append(i)
 
     def end_part(self):
         # TODO: record end part
@@ -723,7 +746,7 @@ class SymbaductFactory(Factory):
     def fix_schedule(self):
         # only used by fn conditions
 
-        if 'self' in cfg.cond['type']:
+        if 'self' in cfg.cond['type'] or cfg.cond['type'] == 'mult':
             change_index = 0
             sched = self.ref_schedule[:]
         else:
@@ -750,13 +773,12 @@ class SymbaductFactory(Factory):
 
     def fix_ref_color(self):
         def get_color_index(): # chose part or fn status
-            if cfg.cond['type'] == 'fn-self':
+            if cfg.cond['type'] in ['fn-self', 'mult']:
                 return self.fn_status
             elif cfg.cond['type'] == 'fn-target':
                 return 0
-            return cfg.exp['save']['part'] - 1
-
-        part = self.get_part()
+            elif cfg.cond['type'] == 'sequence':
+                return cfg.exp['save']['part'] - 1
 
         ref_back = self.ref_back[:]
 
@@ -1006,10 +1028,13 @@ class SymbaductFactory(Factory):
         if player == 0:
             # if cfg.cond['type'] == 'fn-self':
             #     self.reset_fn_status(player)
-            self.point_criteria_counter += 1
-            if self.point_criteria_counter >= cfg.cond['end after']:
-                self.point_criteria_counter = 0
+            self.point_counter += 1
+            if self.point_counter >= cfg.cond['end after']:
+                self.point_counter = 0
                 self.end_part()
+            elif cfg.cond['type'] == 'mult':
+                self.fn_status = self.mult_sched[self.point_counter]
+                self.fix_trial_settings(fix_schedule=True)
         if 'fn' in cfg.cond['type']:
             if player == 1 and 'target' in cfg.cond['type'] or \
                     player == 0 and 'self' in cfg.cond['type']:
@@ -1022,6 +1047,7 @@ class SymbaductFactory(Factory):
                 self.reset_fn_status()
             self.fn_trials.append(self.fn_trial)
             self.fn_trial = 0
+
 
 
     def reset_fn_status(self):
@@ -1223,7 +1249,8 @@ def get_experiment(exp_dir, define_experiment):
     if define_experiment:
         experiment = cfg.server['experiment']
         return experiment
-    experiments = [x[:-4] for x in os.listdir(exp_dir) if '.ini' in x]
+    experiments = [x[:-4] for x in os.listdir(exp_dir) if ('.ini' in x)
+                   and ('_conditions' not in x) and ('_instructions' not in x)]
     # dialog asks for an experiment
     experiment = eg.choicebox(cfg.s_msg['run which experiment'], choices=experiments)
     if experiment is None:
