@@ -477,7 +477,14 @@ class SymbaductFactory(Factory):
         self.delay_calls = {}
 
         # experiment variables
-
+        self.all_click = 0
+        self.ref_click = 0
+        self.adj_click = 0
+        self.all_press = 0
+        self.ref_press = 0
+        self.adj_press = 0
+        self.ref_fn_click = 0
+        self.adj_fn_click = 0
         self.points = [0, 0]
         self.count_ratio_click = [0, 0]
         self.conditions = text_to_list(cfg.exp['conditions']['conditions'])
@@ -523,10 +530,12 @@ class SymbaductFactory(Factory):
         self.previous_event = self.event
         self.time_press = [0, 0]
         self.time_previous_press = [0, 0]
-        self.time_previous_point_press = [0, 0]
+        # self.time_previous_point_press = [0, 0]
         self.time_point_press = [0, 0]
+
         self.time_schedule = [0, 0]
 
+        self.time_previous_add_point = [0, 0]
         self.time_add_point = [0, 0]
 
         # end variables
@@ -822,17 +831,23 @@ class SymbaductFactory(Factory):
 
         l = ['hour',
              'event',
+             'player',
              'description',
              'all_click',
              'ref_click',
-             'target_click',
-             'player',
+             'adj_click',
+             'all_press',
+             'ref_press',
+             'adj_press',
+             'ref_fn_click',
+             'adj_fn_click',
+
              'response',
              u't_start',
              't_response',
              u'latency',
              'ref_points',
-             'target_points']
+             'adj_points']
 
         data_string = ';'.join([unicode(x) for x in l]) + u'\n'
         output_file.write(data_string)
@@ -840,17 +855,22 @@ class SymbaductFactory(Factory):
         self.line = dict(
             hour='',
             event='',
+            player='',
             description='',
             all_click='',
             ref_click='',
-            target_click='',
-            player='',
+            adj_click='',
+            all_press='',
+            ref_press='',
+            adj_press='',
+            ref_fn_click='',
+            adj_fn_click='',
             response='',
             t_start='',
             t_response='',
             latency='',
             ref_points='',
-            target_points='')
+            adj_points='')
 
         data = dict(self.line,
                     event=u'start server',
@@ -864,17 +884,22 @@ class SymbaductFactory(Factory):
         d_list = [
             d['hour'],
             d['event'],
+            d['player'],
             d['description'],
             d['all_click'],
             d['ref_click'],
-            d['target_click'],
-            d['player'],
+            d['adj_click'],
+            d['all_press'],
+            d['ref_press'],
+            d['adj_press'],
+            d['ref_fn_click'],
+            d['adj_fn_click'],
             d['response'],
             d['t_start'],
             d['t_response'],
             d['latency'],
             d['ref_points'],
-            d['target_points']]
+            d['adj_points']]
 
         data_string = ';'.join([unicode(x) for x in d_list]) + u'\n'
 
@@ -945,26 +970,28 @@ class SymbaductFactory(Factory):
     #     self.record_line(**data)
     #     print data
 
-    def set_time_press(self):
-        self.time_previous_press = self.time_press
-        self.time_press = self.now
-
     def point_press(self, player):
         self.set_time()
         self.time_previous_press[player] = self.time_press[player]
         self.time_press[player] = self.now
-        self.time_previous_point_press[player] = self.time_point_press[player]
-        self.time_point_press[player] = self.now
+        self.all_click += 1
+        self.all_press += 1
+        if player == 0:
+            self.ref_click += 1
+            self.ref_press += 1
+        else:
+            self.adj_click += 1
+            self.adj_press += 1
 
         add_point = False
 
         schedule = self.schedule[player]
 
-        if player == 0:
-            cfg.exp['save']['ref clicks'] += 1
-        else:
-            cfg.exp['save']['adj clicks'] += 1
-        cfg.exp.write()
+        # if player == 0:
+        #     cfg.exp['save']['ref clicks'] += 1
+        # else:
+        #     cfg.exp['save']['adj clicks'] += 1
+        # cfg.exp.write()
 
         if schedule == 'ratio':
             self.count_ratio_click[player] += 1
@@ -978,11 +1005,21 @@ class SymbaductFactory(Factory):
                 self.time_schedule[player] = self.now
                 add_point = True
 
+        self.record_press(player)
+
         if add_point:
             self.add_point(player)
 
+
+
+
     def fn_press(self, player, fn):
         self.set_time()
+        self.all_click += 1
+        if player == 0:
+            self.ref_click += 1
+        else:
+            self.adj_click += 1
         if player > 0:
             # TODO: record adj click?
             # self.record_fn_press(player, fn)
@@ -1019,6 +1056,7 @@ class SymbaductFactory(Factory):
 
     def add_point(self, player):
         self.set_time()
+        self.time_previous_add_point[player] = self.time_add_point[player]
         self.time_add_point[player] = self.now
         self.points[player] += 1
         for p in self.get_players_and_observer():
@@ -1047,60 +1085,13 @@ class SymbaductFactory(Factory):
                 self.reset_fn_status()
             self.fn_trials.append(self.fn_trial)
             self.fn_trial = 0
-
-
+        self.record_point(player)
 
     def reset_fn_status(self):
         self.fn_status = 1
         self.fix_trial_settings(fix_schedule=True)
 
     # ADMIN STUFF
-
-    # def force_game_ready(self):
-    #     for p in self.get_players_and_observer():
-    #         p.callRemote(cmd.GameReady)
-
-    #
-    # def record_choice(self, player): #CHOICE
-    #     print 'got to record choice'
-    #     self.set_time_press()
-    #     self.time_start_choice = self.time_choice
-    #     self.time_choice = self.now
-    #     data = dict(self.line,
-    #                 event='choice',
-    #                 hour=self.hour,
-    #                 description='composite press',
-    #                 cycle=cfg.exp['save']['cycle'] + 1,
-    #                 player=player + 1,
-    #                 t_start=n_uni(self.time_start_choice),
-    #                 t_response=n_uni(self.time_choice),
-    #                 latency=n_uni(self.time_choice - self.time_start_choice),
-    #                 color=self.active_color,
-    #                 shape=self.active_shape,
-    #                 size=self.active_size,
-    #                 n_correct=self.n_correct,
-    #                 points=self.points,
-    #                 total=self.total_points,
-    #                 )
-    #     self.record_line(**data)
-    #     print data
-
-    # def record_start_choice(self): #CHOICE
-    #     print 'got to record choice'
-    #     data = dict(self.line,
-    #                 event='start choice',
-    #                 hour=self.hour,
-    #                 description='',
-    #                 cycle=cfg.exp['save']['cycle'] + 1,
-    #                 t_start=n_uni(self.now),
-    #                 color=self.active_color,
-    #                 shape=self.active_shape,
-    #                 size=self.active_size,
-    #                 total=self.total_points,
-    #                 )
-    #     self.record_line(**data)
-    #     print data
-
 
     #
     #
@@ -1153,6 +1144,51 @@ class SymbaductFactory(Factory):
                          status=status).addErrback(bailout)
         self.record_end(status)
 
+    def record_press(self, player):
+        t_start = self.time_previous_press[player]
+        data = dict(self.line,
+                    event='press',
+                    hour=self.hour,
+                    all_click=self.all_click,
+                    ref_click=self.ref_click,
+                    adj_click=self.adj_click,
+                    all_press=self.all_press,
+                    ref_press=self.ref_press,
+                    adj_press=self.adj_press,
+                    ref_fn_click=self.ref_fn_click,
+                    adj_fn_click=self.adj_fn_click,
+                    player=player,
+                    t_start=n_uni(t_start),
+                    t_response=n_uni(self.now),
+                    latency=n_uni(t_start - self.now),
+                    ref_points=self.points[0],
+                    adj_points=self.points[1]
+                    )
+        self.record_line(**data)
+
+    def record_point(self, player):
+
+        t_start = self.time_previous_add_point[player]
+        data = dict(self.line,
+                    event='point',
+                    hour=self.hour,
+                    all_click=self.all_click,
+                    ref_click=self.ref_click,
+                    adj_click=self.adj_click,
+                    all_press=self.all_press,
+                    ref_press=self.ref_press,
+                    adj_press=self.adj_press,
+                    ref_fn_click=self.ref_fn_click,
+                    adj_fn_click=self.adj_fn_click,
+                    player=player,
+                    t_start=n_uni(t_start),
+                    t_response=n_uni(self.now),
+                    latency=n_uni(t_start - self.now),
+                    ref_points=self.points[0],
+                    adj_points=self.points[1]
+                    )
+        self.record_line(**data)
+
     def record_fn_press(self, player, fn, fn_change='', fn_status=''):
         t_start = n_uni(self.time_add_point[player])
         data = dict(self.line,
@@ -1167,7 +1203,7 @@ class SymbaductFactory(Factory):
                     t_response=n_uni(self.now),
                     latency=n_uni(t_start - self.now),
                     ref_points='',
-                    target_points=''
+                    adj_points=''
                     )
         self.record_line(**data)
 
