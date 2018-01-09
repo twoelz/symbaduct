@@ -332,15 +332,13 @@ class ScreenGame(Screen):
         ref_coin.width = ref_coin.parent.height * self.ref_coin_size
         ref_coin.height = ref_coin.parent.height * self.ref_coin_size
         anim = Animation(size=(size_after, size_after), t='out_cubic', duration=0.1)
-        # anim.bind(on_complete=lambda x, y: app.change_points())
         anim += Animation(size=(size_b4, size_b4), t='out_cubic', duration=0.1)
         anim.start(ref_coin)
-
         plus_label.text = "+1"
 
         if not adj:
             play(app.sound['point added'])
-        # Clock.schedule_once(self.clear_plus)
+
         Clock.schedule_once(lambda dt: self.change_points(adj=adj), 0.1)
 
     def change_points(self, adj=False):
@@ -369,53 +367,8 @@ class ScreenGame(Screen):
         # obs here: disable all buttons (currently disabled by checking obs)
         pass
 
-    # def add_player_count(self, player_count):
-    #     self.ids.label_game_message.text = str(player_count)
-
-    def fix_layout(self):
-
-        # DO STUFF HERE TO SETUP CONDITION
-        pass
-
-
-    # def update(self, dt):
-    #
-    #     print 'hi'
-    #
-    #     if self.ref_coin_size <= 0.5:
-    #         self.ref_coin_reduce = False
-    #
-    #     if self.ref_coin_size >= 1.0:
-    #         self.ref_coin_reduce = True
-    #
-    #     if self.ref_coin_reduce:
-    #         self.ref_coin_size -= 0.01
-    #     else:
-    #         self.ref_coin_size += 0.01
-    #
-    #     print self.ref_coin_size
-    #
-    #
-    #
-    #     ref_coin = self.ids.ref_coin
-    #
-    #     if not self.ref_coin_started:
-    #         self.ref_coin_started = True
-    #         # ref_coin.mipmap = False
-    #
-    #     ref_coin.width = ref_coin.parent.height * self.ref_coin_size
-    #     ref_coin.height = ref_coin.parent.height * self.ref_coin_size
-    #
-    #
-    #     if self.ref_coin_size >= 1.0:
-    #         self.ref_coin_count -= 1
-    #         if self.ref_coin_count == 0:
-    #             Clock.unschedule(self.update_event)
-    #             ref_coin.width = ref_coin.parent.height
-    #             ref_coin.height = ref_coin.parent.height
-    #             self.ref_coin_started = False
-    #             # ref_coin.mipmap = True
-
+    def update_observer(self, info):
+        self.ids.label_game_message.text = info
 
 class ScreenPause(Screen):
     pass
@@ -517,25 +470,14 @@ class ScreenManagerMain(ScreenManager):
 
         player_count = app.player_count
         if obs:
+            print 'observer active'
             player_count = 'Observer {}'.format(player_count)
         else:
-            print player_count
-
-        game_screen = sm.get_screen('game')
-
-        # # TODO: REMOVE ME LATER
-        # game_screen.add_player_count(player_count)
-
-        game_screen.fix_layout()
-
-
-
-        # fix game screen almost as soon as it is shown
-        # Clock.schedule_once(app.fix_game_layout, 0.1)
+            print 'player active'
+        game_screen = self.get_screen('game')
 
         # reset connect screen layout for when we go back to that screen.
         Clock.schedule_once(self.get_screen('connect').reset_layout, 0.2)
-
 
 
     def player_left(self):
@@ -543,7 +485,16 @@ class ScreenManagerMain(ScreenManager):
         self.go_to('pause')
 
     def session_pause(self):
-        self.get_screen('pause').ids.pause_label.text = 'PAUSA\nAVISE O EXPERIMENTADOR'
+        info = 'PAUSA\nAVISE O EXPERIMENTADOR'
+
+        if obs:
+            game_message_label = self.get_screen('game').ids.label_game_message
+            game_message_label.font_size = '20dp'
+            game_message_text = game_message_label.text
+            info = u'PAUSA\n\n' +  game_message_text
+
+        self.get_screen('pause').ids.pause_label.text = info
+
         self.go_to('pause')
 
     def session_unpause(self):
@@ -559,27 +510,12 @@ class ScreenManagerMain(ScreenManager):
     def end_experiment(self):
         end_text = u'Pesquisa encerrada:\n\navise o pesquisador'
         if obs:
-            end_text += u'\n\n{}\n{}'.format(status, App.get_running_app().observer_message)
+            game_message_text = self.get_screen('game').ids.label_game_message.text
+            end_text += u'\n\n{}'.format(game_message_text)
+
         self.get_screen('end').ids.end_label.text = end_text
         self.go_to('end')
 
-class HoverLabel(Label, HoverBehavior):
-    def on_enter(self, *args):
-        pass
-        # print "You are in, though this point", self.border_point
-
-    def on_leave(self, *args):
-        pass
-        # print "You left through this point", self.border_point
-
-class HoverButton(Button, HoverBehavior):
-    def on_enter(self, *args):
-        pass
-        # print "You are in, though this point", self.border_point
-
-    def on_leave(self, *args):
-        pass
-        # print "You left through this point", self.border_point
 
 class ClientAMP(amp.AMP):
     """
@@ -637,7 +573,6 @@ class ClientAMP(amp.AMP):
         print 'pause'
 
         app.session_pause()
-        # DO STUFF HERE (PAUSE GAME?)
         return {}
 
     @cmd.UnPauseSession.responder
@@ -645,7 +580,6 @@ class ClientAMP(amp.AMP):
         print 'unpause'
 
         app.session_unpause()
-        # DO STUFF HERE (PAUSE GAME?)
         return {}
 
     @cmd.EndSession.responder
@@ -697,6 +631,17 @@ class ClientAMP(amp.AMP):
         app.add_point(player, points)
 
         return {}
+
+    # OBSERVER METHODS
+    @cmd.UpdateObserver.responder
+    def update_observer(self, info):
+
+
+        sm.get_screen('game').update_observer(info)
+
+        return {}
+
+
 
     def point_press(self):
         self.callRemote(cmd.PointPress)
@@ -780,21 +725,6 @@ class ClientApp(App):
                 or cfg.client['options']['autoconnect']:
             self.try_to_connect()
 
-    # def fix_game_layout(self, *args):
-    #
-    #     # fixes from experiment config
-    #
-    #     gm = sm.get_screen('game')
-    #
-    #     for button in xrange(1, 8):
-    #         button_widget = getattr(sm.get_screen('game').color_parameters_layout.ids, 'color_{}'.format(button))
-    #         button_widget.background_color = cfg.exp['colors'][str(button)]
-    #
-    #
-    #     # fix game layout
-    #
-    #     self.set_button_hover(self.active_set, forced=True)
-    #     self.set_layout(initial_fix=True)
 
     # CONNECT SCREEN METHODS
 
@@ -821,9 +751,9 @@ class ClientApp(App):
                 addErrback(self.add_client_error)
             fac.add_client(p)
 
-        print 'starting reactor'
-
         reactor.connectTCP(HOST, PORT, fac, timeout=10)
+        print 'reactor started'
+
         deferred.addCallback(got_protocol)
         deferred.addErrback(self.cant_connect_error)
 
@@ -922,17 +852,14 @@ class ClientApp(App):
                             print_error(print_error), 0.1)
 
     def player_left(self):
-        # TODO: unschedule all funcs
         print 'running player_left from app'
         sm.player_left()
 
 
     def session_pause(self):
-        # TODO: unschedule stuff
         sm.session_pause()
 
     def session_unpause(self):
-        # TODO: reschedule stuff?
         sm.session_unpause()
 
     def end_experiment(self):
@@ -958,13 +885,16 @@ class ClientApp(App):
 
 
     def point_press(self):
-        fac.client.point_press()
+        if not obs:
+            fac.client.point_press()
 
     def n_press(self):
-        fac.client.n_press()
+        if not obs:
+            fac.client.n_press()
 
     def f_press(self):
-        fac.client.f_press()
+        if not obs:
+            fac.client.f_press()
 
     def show_adj(self, show):
         gm = sm.get_screen('game')
@@ -994,6 +924,8 @@ class ClientApp(App):
 
     def instruction_end(self):
         # TODO: start timing variables here
+        # TODO: instruction duration
+        # TODO: pause duration
 
         sm.go_to('game')
 
@@ -1079,22 +1011,18 @@ def set_obs_on():
     global obs
     obs = True
 
-
-
 def main():
     # global sm
     global stout
 
     # CREATE DIRS AND STOUT
     if obs:
-        print "I AM OBS!"
         # redirect sdtout and stderr to log file
         if not os.path.exists(os.path.join(DIR, 'output', 'log', 'observer')):
             os.mkdir(os.path.join(DIR, 'output', 'log', 'observer'))
         stout = StandOut(logfile=os.path.join(DIR, 'output', 'log', 'observer',
                                               'log%s.txt' % LOCALTIME))
     else:  # client
-        print "I AM CLIENT!"
         # redirect sdtout and stderr to log file
         if not os.path.exists(os.path.join(DIR, 'output', 'log', 'client')):
             os.mkdir(os.path.join(DIR, 'output', 'log', 'client'))

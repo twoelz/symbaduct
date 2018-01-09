@@ -103,9 +103,6 @@ class Protocol(amp.AMP):
 
     def initialize(self):
         pass
-        # self.admin = False
-        # self.observer = False
-        # two above done by adding attribute directly to class
 
         # ADD PROTOCOL VARIABLES HERE
         # self.asked_ready = False
@@ -128,24 +125,6 @@ class Protocol(amp.AMP):
             self.observer_lost()
         else:
             self.player_lost()
-
-        # elif not self.obs:
-        #     if 'c_id' in self.__dict__:
-        #         try:
-        #             del fac.clients[self.c_id]
-        #         except KeyError:
-        #             pass
-        #         if fac.session_started and not fac.session_ended:
-        #             for p in fac.clients.itervalues():
-        #                 p.callRemote(cmd.ClientLeft).addErrback(bailout)
-        #             if fac.obs_in and fac.observer:
-        #                 fac.observer.callRemote(cmd.ClientLeft
-        #                                     ).addErrback(bailout)
-        # elif fac.session_started and not fac.session_ended:
-        #     for p in fac.clients.itervalues():
-        #         p.callRemote(cmd.ObserverLeft).addErrback(bailout)
-        # elif self.obs:
-        #     fac.obs_in = False
 
         super(Protocol, self).connectionLost(reason)
 
@@ -218,10 +197,6 @@ class Protocol(amp.AMP):
             accept = False
             reason = cfg.s_msg['server full']
 
-        print 'current players:', len(fac.players)
-        print 'was accepted?', accept
-        print 'is ready?', ready
-        print 'player count?', type(player_count), player_count
         return {'added': accept,
                 'reason': reason,
                 'ready': ready,
@@ -286,14 +261,6 @@ class Protocol(amp.AMP):
     @cmd.PointPress.responder
     def point_press(self):
         fac.point_press(self.client_count)
-        # fac.set_time()
-        #
-        # fac.points[self.client_count] += 1
-        #
-        # for p in fac.get_players_and_observer():
-        #     p.callRemote(cmd.AddPoint,
-        #                     player=self.client_count,
-        #                     points=fac.points)
         return {}
 
     @cmd.NPress.responder
@@ -324,138 +291,6 @@ class Protocol(amp.AMP):
     def force_unpause(self):
         fac.unpause_session()
         return {}
-
-    # @cmd.SetButtonHover.responder
-    # def set_button_hover(self, button, forced):
-    #     print 'got to set button hover responder. forced =', forced
-    #     fac.set_time()
-    #     for p in fac.get_players_and_observer():
-    #         p.callRemote(cmd.SetButtonHovered,
-    #                      button=button,
-    #                      forced=forced).addErrback(bailout)
-    #     if not forced:
-    #         fac.record_set_button_hover(button, self.client_count)
-    #     return {}
-    #
-    # @cmd.SetButtonHoverLeave.responder
-    # def set_button_hover_leave(self, button, forced):
-    #     fac.set_time()
-    #     for p in fac.get_players_and_observer():
-    #         p.callRemote(cmd.SetButtonHoverLeft,
-    #                      button=button,
-    #                      forced=forced).addErrback(bailout)
-    #     return {}
-    #
-    # @cmd.SetButtonPress.responder
-    # def set_button_press(self, button):
-    #     fac.set_time()
-    #     for p in fac.get_players_and_observer():
-    #         p.callRemote(cmd.SetButtonPressed,
-    #                      button=button).addErrback(bailout)
-    #     fac.record_set_button_press(button, self.client_count)
-    #     return {}
-    #
-    # @cmd.ColorButtonHover.responder
-    # def color_button_hover(self, button, forced):
-    #     fac.set_time()
-    #     for p in fac.get_players_and_observer():
-    #         p.callRemote(cmd.ColorButtonHovered,
-    #                      button=button,
-    #                      forced=forced).addErrback(bailout)
-    #     if not forced:
-    #         fac.record_color_button_hover(button, self.client_count)
-    #     return {}
-    #
-    # @cmd.ColorButtonHoverLeave.responder
-    # def color_button_hover_leave(self, button, forced):
-    #     fac.set_time()
-    #     for p in fac.get_players_and_observer():
-    #         p.callRemote(cmd.ColorButtonHoverLeft,
-    #                      button=button,
-    #                      forced=forced).addErrback(bailout)
-    #     return {}
-    #
-    # @cmd.ColorButtonPress.responder
-    # def color_button_press(self, button):
-    #     fac.set_time()
-    #     for p in fac.get_players_and_observer():
-    #         p.callRemote(cmd.ColorButtonPressed,
-    #                      button=button).addErrback(bailout)
-    #     fac.record_color_button_press(button, self.client_count)
-    #     return {}
-    #
-    #
-    # @cmd.SizeButtonHover.responder
-    # def size_button_hover(self, button, forced):
-    #     fac.set_time()
-    #     for p in fac.get_players_and_observer():
-    #         p.callRemote(cmd.SizeButtonHovered,
-    #                      button=button,
-    #                      forced=forced).addErrback(bailout)
-    #     if not forced:
-    #         fac.record_size_button_hover(button, self.client_count)
-    #     return {}
-    #
-    # @cmd.SizeButtonHoverLeave.responder
-    # def size_button_hover_leave(self, button, forced):
-    #     fac.set_time()
-    #     for p in fac.get_players_and_observer():
-    #         p.callRemote(cmd.SizeButtonHoverLeft,
-    #                      button=button,
-    #                      forced=forced).addErrback(bailout)
-    #     return {}
-    #
-    # @cmd.SizeButtonPress.responder
-    # def color_button_press(self, button):
-    #     fac.set_time()
-    #     for p in fac.get_players_and_observer():
-    #         p.callRemote(cmd.SizeButtonPressed,
-    #                      button=button).addErrback(bailout)
-    #     fac.record_size_button_press(button, self.client_count)
-    #     return {}
-    #
-    #
-    # @cmd.ShapeButtonHover.responder
-    # def shape_button_hover(self, button, forced):
-    #     fac.set_time()
-    #     for p in fac.get_players_and_observer():
-    #         p.callRemote(cmd.ShapeButtonHovered,
-    #                      button=button,
-    #                      forced=forced).addErrback(bailout)
-    #     if not forced:
-    #         fac.record_shape_button_hover(button, self.client_count)
-    #     return {}
-    #
-    # @cmd.ShapeButtonHoverLeave.responder
-    # def shape_button_hover_leave(self, button, forced):
-    #     fac.set_time()
-    #     for p in fac.get_players_and_observer():
-    #         p.callRemote(cmd.ShapeButtonHoverLeft,
-    #                      button=button,
-    #                      forced=forced).addErrback(bailout)
-    #     return {}
-    #
-    # @cmd.ShapeButtonPress.responder
-    # def color_button_press(self, button):
-    #     fac.set_time()
-    #     for p in fac.get_players_and_observer():
-    #         p.callRemote(cmd.ShapeButtonPressed,
-    #                      button=button).addErrback(bailout)
-    #     fac.record_shape_button_press(button, self.client_count)
-    #     return {}
-    #
-    # @cmd.CompositeButtonPress.responder
-    # def composite_button_press(self):
-    #     fac.set_time()
-    #     for p in fac.get_players_and_observer():
-    #         p.callRemote(cmd.CompositeButtonPressed).addErrback(bailout)
-    #     # TODO: check stability, and schedule next choice
-    #     fac.choice_made(self.client_count)
-    #
-    #     return {}
-
-
-
 
 class SymbaductFactory(Factory):
     '''A factory that creates and holds data and protocol instances.'''
@@ -507,10 +342,10 @@ class SymbaductFactory(Factory):
         self.fn_trial = 0
         self.fn_trials = []
 
-        self.fn_change = None
-        # fn_change = None means first choice lowers
-        # fn_change = 1 means f lowers, n raises
-        # fn_change = 0 means f raises, n lowers
+        self.fn_setup = None
+        # fn_setup = None means first choice lowers
+        # fn_setup = 1 means f lowers, n raises
+        # fn_setup = 0 means f raises, n lowers
 
         # STATUSES
         self.condition_name = ''
@@ -527,6 +362,9 @@ class SymbaductFactory(Factory):
         self.hour = '-'.join([str(x) for x in time.localtime()[:4]])
         self.time_started = time.time()
         self.now = 0
+
+        self.time_condition = 0
+
         self.time_press = [0, 0]
         self.time_previous_press = [0, 0]
         self.time_fn_click = [0, 0]
@@ -573,9 +411,11 @@ class SymbaductFactory(Factory):
 
     def start_condition(self):
         self.reset_time_variables()
+        self.time_condition = self.now
 
         if self.check_end_experiment():
             return
+
         self.condition_name = self.conditions[cfg.exp['save']['condition'] - 1]
         cfg.cond = cfg.conds[self.condition_name].dict()
         self.ref_schedule = text_to_list(cfg.cond['ref schedules'])
@@ -586,12 +426,23 @@ class SymbaductFactory(Factory):
 
         self.point_counter = 0
 
+        self.all_click = 0
+        self.ref_click = 0
+        self.adj_click = 0
+        self.all_press = 0
+        self.ref_press = 0
+        self.adj_press = 0
+        self.ref_fn_click = 0
+        self.adj_fn_click = 0
+
         self.fn_reduce_change = 0
         self.fn_increase_change = 0
         self.fn_total_change = 0
 
         self.fn_trial = 0
         self.fn_trials = []
+
+        self.record_condition_start()
 
         self.fix_condition_settings()
 
@@ -610,26 +461,30 @@ class SymbaductFactory(Factory):
             p.callRemote(cmd.EndExperiment).addErrback(bailout)
 
     def pause_session(self):
+        self.set_time()
         if self.paused:
             return
         self.paused = True
+        self.record_pause()
         for p in self.get_players_and_observer():
             p.callRemote(cmd.PauseSession).addErrback(bailout)
 
     def unpause_session(self):
         if not self.paused:
             return
+        self.set_time()
         self.paused = False
+        self.record_unpause()
         for p in self.get_players_and_observer():
             p.callRemote(cmd.UnPauseSession).addErrback(bailout)
+
         if self.condition_ended:
             self.start_condition()
 
     def start_part(self):
 
         self.set_time()
-
-        self.fn_change = None
+        self.fn_setup = None
 
         part = self.get_part()
 
@@ -704,13 +559,16 @@ class SymbaductFactory(Factory):
             self.start_part()
 
     def end_condition(self):
-        # TODO: check if condition is last condition - if yes end program
+
+        self.record_condition_end()
+
         cfg.exp['save']['part'] = 1
 
         self.check_condition_move()
 
         if self.check_end_experiment():
             return
+
 
         if cfg.cond['pause']:
             self.condition_ended = True
@@ -850,7 +708,8 @@ class SymbaductFactory(Factory):
              'ref_fn_click',
              'adj_fn_click',
              'response',
-             'fn_change',
+             'fn_setup',
+             'fn_direction',
              'fn_status',
              u't_start',
              't_response',
@@ -877,7 +736,8 @@ class SymbaductFactory(Factory):
             ref_fn_click='',
             adj_fn_click='',
             response='',
-            fn_change='',
+            fn_setup='',
+            fn_direction='',
             fn_status='',
             t_start='',
             t_response='',
@@ -903,7 +763,8 @@ class SymbaductFactory(Factory):
             d['ref_fn_click'],
             d['adj_fn_click'],
             d['response'],
-            d['fn_change'],
+            d['fn_setup'],
+            d['fn_direction'],
             d['fn_status'],
             d['t_start'],
             d['t_response'],
@@ -992,6 +853,24 @@ class SymbaductFactory(Factory):
 
         self.time_previous_press[player] = self.now
 
+        self.update_observer()
+
+    def update_observer(self):
+        data_list = [u'condition: ' + unicode(cfg.exp['save']['condition']),
+                    u'name: ' + unicode(self.condition_name),
+                    u'time: ' + n_uni(self.now),
+                    u'ref_press: ' + unicode(self.ref_press),
+                    u'adj_press: ' + unicode(self.adj_press),
+                    u'ref_fn_click: ' + unicode(self.ref_fn_click),
+                    u'adj_fn_click: ' + unicode(self.adj_fn_click),
+                    u'fn_status: ' + unicode(self.fn_status),
+                    u'ref_points: ' + unicode(self.points[0]),
+                    u'adj_points: ' + unicode(self.points[1])]
+        info = u'\n'.join([unicode(x) for x in data_list])
+        for p in self.get_observer():
+            p.callRemote(cmd.UpdateObserver,
+                         info=info)
+
     def fn_press(self, player, fn):
         self.set_time()
 
@@ -1002,38 +881,43 @@ class SymbaductFactory(Factory):
         else:
             self.adj_click += 1
 
-        fn_change = ''
+        fn_setup = ''
+        fn_direction = ''
         new_fn_status = ''
 
         if player > 0:
             pass
         elif 'fn' in cfg.cond['type']:
             self.fn_trial = 1
-            if self.fn_change is None:
+            if self.fn_setup is None:
                 if fn == 'f':
-                    self.fn_change = 1
+                    self.fn_setup = 1
                 else:
-                    self.fn_change = 0
-            fn_change = self.fn_change
+                    self.fn_setup = 0
+            fn_setup = self.fn_setup
             if self.fn_invert:
-                fn_change = 1 - fn_change
+                fn_setup = 1 - fn_setup
 
-            if fn == 'f' and fn_change == 1 \
-                or fn == 'n' and fn_change == 0:
+            if fn == 'f' and fn_setup == 1 \
+                or fn == 'n' and fn_setup == 0:
                 self.fn_reduce_change += 1
+                fn_direction = 0
                 # lowers
                 # fn_status: 0 = lower, 2 = higher, 1 = default/middle
                 new_fn_status = max(self.fn_status - 1, 0)
             else: # raises
                 self.fn_increase_change += 1
+                fn_direction = 1
                 new_fn_status = min(self.fn_status + 1, 2)
             self.fn_total_change += 1
-            # self.record_fn_press(player, fn, fn_change, new_fn_status)
+            # self.record_fn_press(player, fn, fn_setup, new_fn_status)
+
+            self.record_fn_click(player, fn, fn_setup, fn_direction, new_fn_status)
+
             if new_fn_status != self.fn_status:
                 self.fn_status = new_fn_status
                 self.fix_trial_settings(fix_schedule=True)
 
-        self.record_fn_click(player, fn, fn_change, new_fn_status)
         self.time_previous_fn_click[player] = self.now
 
     def change_fn_status(self):
@@ -1041,6 +925,7 @@ class SymbaductFactory(Factory):
             p.callRemote(cmd.ChangeFnStatus)
 
     def add_point(self, player):
+        end_part = False
         self.set_time()
         self.time_add_point[player] = self.now
         self.points[player] += 1
@@ -1052,14 +937,15 @@ class SymbaductFactory(Factory):
             self.point_counter += 1
             if self.point_counter >= cfg.cond['end after']:
                 self.point_counter = 0
-                self.end_part()
+                end_part = True
+
             elif cfg.cond['type'] == 'mult':
                 self.fn_status = self.mult_sched[self.point_counter]
                 self.fix_trial_settings(fix_schedule=True)
         if 'fn' in cfg.cond['type']:
             if player == 1 and 'target' in cfg.cond['type'] or \
                     player == 0 and 'self' in cfg.cond['type']:
-                if self.fn_change is not None:
+                if self.fn_setup is not None:
                     self.fn_invert_counter += 1
                     if cfg.cond['invert fn']:
                         if self.fn_invert_counter >= cfg.cond['invert fn after']:
@@ -1070,6 +956,9 @@ class SymbaductFactory(Factory):
             self.fn_trial = 0
         self.record_point(player)
         self.time_previous_add_point[player] = self.now
+
+        if end_part:
+            self.end_part()
 
     def reset_fn_status(self):
         self.fn_status = 1
@@ -1140,7 +1029,7 @@ class SymbaductFactory(Factory):
                     )
         self.record_line(**data)
 
-    def record_fn_click(self, player, fn, fn_change='', fn_status=''):
+    def record_fn_click(self, player, fn, fn_setup, fn_direction, new_fn_status):
         t_start = self.time_previous_fn_click[player]
         data = dict(self.line,
                     condition=cfg.exp['save']['condition'],
@@ -1157,8 +1046,9 @@ class SymbaductFactory(Factory):
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
                     response=fn,
-                    fn_change=fn_change,
-                    fn_status=fn_status,
+                    fn_setup=fn_setup,
+                    fn_direction=fn_direction,
+                    fn_status=new_fn_status,
                     t_start=n_uni(t_start),
                     t_response=n_uni(self.now),
                     latency=n_uni(self.now - t_start),
@@ -1195,12 +1085,41 @@ class SymbaductFactory(Factory):
 
     def record_condition_end(self):
         data = dict(self.line,
-                    event='start condition',
-                    description=cfg.exp['save']['condition'],
+                    condition=cfg.exp['save']['condition'],
+                    name=self.condition_name,
+                    event='end condition',
+                    hour=self.hour,
+                    all_click=self.all_click,
+                    ref_click=self.ref_click,
+                    adj_click=self.adj_click,
+                    all_press=self.all_press,
+                    ref_press=self.ref_press,
+                    adj_press=self.adj_press,
+                    ref_fn_click=self.ref_fn_click,
+                    adj_fn_click=self.adj_fn_click,
+                    t_start=n_uni(self.time_condition),
+                    t_response=n_uni(self.now),
+                    latency=n_uni(self.now - self.time_condition),
+                    )
+        self.record_line(**data)
+
+    def record_pause(self):
+        data = dict(self.line,
+                    condition=cfg.exp['save']['condition'],
+                    name=self.condition_name,
+                    event='pause',
                     hour=self.hour,
                     t_start=n_uni(self.now))
         self.record_line(**data)
 
+    def record_unpause(self):
+        data = dict(self.line,
+                    condition=cfg.exp['save']['condition'],
+                    name=self.condition_name,
+                    event='unpause',
+                    hour=self.hour,
+                    t_start=n_uni(self.now))
+        self.record_line(**data)
 
     #
     def get_players_and_observer(self):

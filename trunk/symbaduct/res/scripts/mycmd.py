@@ -77,24 +77,6 @@ class ForcePause(amp.Command):
 class ForceUnPause(amp.Command):
     response = []
 
-# class StartExperiment(amp.Command):
-#     response = [('started', amp.Boolean())]
-
-# class SendAdminConfig(amp.Command):
-#     response = [('expcfg', amp.String())]
-
-# class Pause(amp.Command):
-#     response = []
-#
-# class UnPause(amp.Command):
-#     response = []
-
-# class AllowEndSession(amp.Command):
-#     response = []
-#
-# class AllowEndStableSession(amp.Command):
-#     response = []
-
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # server to client
@@ -166,32 +148,13 @@ class AdjBack(amp.Command):
 # server to observer
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-# class ObsLineInfoBeforeConfirm(amp.Command):
-#     arguments = [('ident', amp.Integer()),
-#                  ('line', amp.Integer()),
-#                  ]
-#     response = []
-#
-# class ObsLineInfo(amp.Command):
-#     arguments = [('ident', amp.Integer()),
-#                  ('line', amp.Integer())
-#                  ]
-#     response = []
-#
-# class ObsLineRejection(amp.Command):
-#     arguments = [('ident', amp.Integer())]
-#     response = []
-#
-# class ObsHideEndTrialButton(amp.Command):
-#     response = []
-#
-# class GetChat(amp.Command):
-#     arguments = [('result', amp.String())]
-#     response = []
-#
-# class ClientPause(amp.Command):
-#     arguments = [('pause', amp.Boolean())]
-#     response = []
+
+
+class UpdateObserver(amp.Command):
+    arguments = [('info', amp.Unicode()),
+                 ]
+    response = []
+
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # examples
@@ -222,28 +185,3 @@ class AdjBack(amp.Command):
 class EndSession(amp.Command):   # FROM SERVER - TO ALL
     arguments = [('status', amp.String())]
     response = []
-
-# class StartFeedback(amp.Command): # FROM SERVER - TO ALL
-#     arguments = [('points', amp.Integer()),
-#                  ('total_points', amp.Integer()),
-#                  ('reset_color', amp.Integer()),
-#                  ('reset_shape', amp.Integer()),
-#                  ('reset_size', amp.Integer()),
-#                  ]
-#     response = []
-
-# class RestartChoice(amp.Command):  # FROM SERVER - TO ALL
-#     response = []
-#
-# class ChangePoints(amp.Command):  # FROM SERVER - TO ALL
-#     response = []
-
-    ##############################
-## OBSERVER EVENTS
-
-# class UpdateObserver(amp.Command): # FROM SERVER - TO OBSERVER
-#     arguments = [('cycle', amp.Integer()),
-#                  ('percent_correct', amp.Float()),
-#                  ('consec_correct', amp.Integer()),
-#                  ]
-#     response = []
