@@ -188,7 +188,7 @@ class Protocol(amp.AMP):
     def add_client(self, observer):
         '''client attempts to connect: server allows it if there is
            a free spot'''
-        fac.set_time(event=False)
+        fac.set_time()
         accept = True
         ready = False
         reason = ''
@@ -246,6 +246,7 @@ class Protocol(amp.AMP):
     def request_instruction_end(self):
         for p in fac.get_players_and_observer():
             p.callRemote(cmd.InstructionEnd)
+        fac.reset_time_variables()
         return {}
 
     @cmd.AddAdmin.responder
@@ -512,6 +513,7 @@ class SymbaductFactory(Factory):
         # fn_change = 0 means f raises, n lowers
 
         # STATUSES
+        self.condition_name = ''
         self.condition_ended = False
         self.paused = False
 
@@ -525,15 +527,14 @@ class SymbaductFactory(Factory):
         self.hour = '-'.join([str(x) for x in time.localtime()[:4]])
         self.time_started = time.time()
         self.now = 0
-        self.time_click = self.now
-        self.event = 0
-        self.previous_event = self.event
         self.time_press = [0, 0]
         self.time_previous_press = [0, 0]
-        # self.time_previous_point_press = [0, 0]
-        self.time_point_press = [0, 0]
+        self.time_fn_click = [0, 0]
+        self.time_previous_fn_click = [0, 0]
 
-        self.time_schedule = [0, 0]
+        self.time_condition = [0, 0]
+
+        # self.time_schedule = [0, 0]
 
         self.time_previous_add_point = [0, 0]
         self.time_add_point = [0, 0]
@@ -548,33 +549,35 @@ class SymbaductFactory(Factory):
 
         self.create_output()
 
-    # def get_conditions(self):
-    #     cond = cfg.exp['conditions']['conditions']
-    #     cond = cond.replace(' ', '')
-    #     return cond.split(',')
-
-    def set_time(self, event=True):
+    def set_time(self):
         self.now = time.time() - self.time_started
         self.hour = '-'.join([str(x) for x in time.localtime()[:4]])
-        if event:
-            self.previous_event = self.event
-            self.event = self.now
+
+    def reset_time_variables(self):
+        self.set_time()
+        now = self.now
+        self.time_press = [now, now]
+        self.time_previous_press = [now, now]
+        self.time_fn_click = [now, now]
+        self.time_previous_fn_click = [now, now]
+        self.time_previous_add_point = [now, now]
+        self.time_add_point = [now, now]
 
     def start_session(self):
         self.time_started = time.time()
         self.hour = '-'.join([str(x) for x in time.localtime()[:4]])
         self.now = 0
-        self.event = 0
-        self.previous_event = 0
         self.session_started = True
         self.record_session_start()
         self.start_condition()
 
     def start_condition(self):
+        self.reset_time_variables()
+
         if self.check_end_experiment():
             return
-        condition_name = self.conditions[cfg.exp['save']['condition'] - 1]
-        cfg.cond = cfg.conds[condition_name].dict()
+        self.condition_name = self.conditions[cfg.exp['save']['condition'] - 1]
+        cfg.cond = cfg.conds[self.condition_name].dict()
         self.ref_schedule = text_to_list(cfg.cond['ref schedules'])
         self.adj_schedule = text_to_list(cfg.cond['adj schedules'])
 
@@ -591,6 +594,7 @@ class SymbaductFactory(Factory):
         self.fn_trials = []
 
         self.fix_condition_settings()
+
         self.start_part()
 
     def check_end_experiment(self):
@@ -622,6 +626,8 @@ class SymbaductFactory(Factory):
             self.start_condition()
 
     def start_part(self):
+
+        self.set_time()
 
         self.fn_change = None
 
@@ -689,11 +695,11 @@ class SymbaductFactory(Factory):
 
     def end_part(self):
         # TODO: record end part
+        self.count_ratio_click = [0, 0]
         part = cfg.exp['save']['part']
         if part >= cfg.cond['parts']:
             self.end_condition()
         else:
-            self.count_ratio_click = [0, 0]
             cfg.exp['save']['part'] += 1
             self.start_part()
 
@@ -765,13 +771,13 @@ class SymbaductFactory(Factory):
         # get specific now
         sched = sched[self.fn_status]
 
-        if self.schedule[change_index] == 'ratio':
+        if 'FR' in sched:
+            self.schedule[change_index] = 'ratio'
             self.ratio[change_index] = int(sched.replace('FR', ''))
-        elif self.schedule[change_index] == 'interval':
+        elif 'FI' in sched:
+            self.schedule[change_index] = 'interval'
             self.interval[change_index] = float(sched.replace('FI', ''))
 
-        # # TODO: CHECK IF RESET OR NOT
-        # self.count_ratio_click[change_index] = 0
 
     def get_part(self):
         part = cfg.exp['save']['part']
@@ -830,6 +836,8 @@ class SymbaductFactory(Factory):
         # record_labels
 
         l = ['hour',
+             'condition',
+             'name',
              'event',
              'player',
              'description',
@@ -841,8 +849,9 @@ class SymbaductFactory(Factory):
              'adj_press',
              'ref_fn_click',
              'adj_fn_click',
-
              'response',
+             'fn_change',
+             'fn_status',
              u't_start',
              't_response',
              u'latency',
@@ -854,6 +863,8 @@ class SymbaductFactory(Factory):
         output_file.close()
         self.line = dict(
             hour='',
+            condition='',
+            name='',
             event='',
             player='',
             description='',
@@ -866,23 +877,20 @@ class SymbaductFactory(Factory):
             ref_fn_click='',
             adj_fn_click='',
             response='',
+            fn_change='',
+            fn_status='',
             t_start='',
             t_response='',
             latency='',
             ref_points='',
             adj_points='')
 
-        data = dict(self.line,
-                    event=u'start server',
-                    hour=self.hour,
-                    t_start=0,
-                    t_response=0)
-        self.record_line(**data)
-
     def record_line(self, **data):
         d = data
         d_list = [
             d['hour'],
+            d['condition'],
+            d['name'],
             d['event'],
             d['player'],
             d['description'],
@@ -895,6 +903,8 @@ class SymbaductFactory(Factory):
             d['ref_fn_click'],
             d['adj_fn_click'],
             d['response'],
+            d['fn_change'],
+            d['fn_status'],
             d['t_start'],
             d['t_response'],
             d['latency'],
@@ -908,14 +918,12 @@ class SymbaductFactory(Factory):
         output_file.close()
 
     def get_mod_config(self, mod_config):
-        self.set_time(event=False)
+        self.set_time()
         for k in mod_config.keys():
             if type(mod_config[k]) == dict:
                 if k not in self.mod_config.keys():
                     self.mod_config[k] = {}
                 self.mod_config[k].update(mod_config[k])
-                # for subk in mod_config[k].keys():
-                #     self.mod_config[k][subk] = mod_config[k][subk]
             else:
                 self.mod_config[k] = mod_config[k]
         if not self.session_started:
@@ -928,8 +936,6 @@ class SymbaductFactory(Factory):
         for k in self.mod_config.keys():
             if type(self.mod_config[k]) == dict:
                 cfg.exp[k].update(copy.deepcopy(self.mod_config[k]))
-                # for subk in self.mod_config[k].keys():
-                #     cfg.exp[k][subk] = copy.deepcopy(self.mod_config[k][subk])
             else:
                 cfg.exp[k] = copy.deepcopy(self.mod_config[k])
         cfg.exp.write()
@@ -954,25 +960,8 @@ class SymbaductFactory(Factory):
 
         print 'mod', mod
 
-    # def record_set_button_hover(self, button, player):
-    #     print 'got to record set button hover'
-    #     data = dict(self.line,
-    #                 event='set button hover',
-    #                 hour=self.hour,
-    #                 description='hover',
-    #                 cycle=cfg.exp['save']['cycle'] + 1,
-    #                 player=player + 1,
-    #                 response=button,
-    #                 t_start=n_uni(self.previous_event),
-    #                 t_response=n_uni(self.event),
-    #                 latency=n_uni(self.event - self.previous_event),
-    #                 )
-    #     self.record_line(**data)
-    #     print data
-
     def point_press(self, player):
         self.set_time()
-        self.time_previous_press[player] = self.time_press[player]
         self.time_press[player] = self.now
         self.all_click += 1
         self.all_press += 1
@@ -982,16 +971,9 @@ class SymbaductFactory(Factory):
         else:
             self.adj_click += 1
             self.adj_press += 1
-
         add_point = False
 
         schedule = self.schedule[player]
-
-        # if player == 0:
-        #     cfg.exp['save']['ref clicks'] += 1
-        # else:
-        #     cfg.exp['save']['adj clicks'] += 1
-        # cfg.exp.write()
 
         if schedule == 'ratio':
             self.count_ratio_click[player] += 1
@@ -1000,9 +982,7 @@ class SymbaductFactory(Factory):
                 add_point = True
 
         elif schedule == 'interval':
-            self.count_ratio_click[player] = 0
-            if self.now - self.time_schedule[player] >= self.interval[player]:
-                self.time_schedule[player] = self.now
+            if self.now - self.time_previous_add_point[player] >= self.interval[player]:
                 add_point = True
 
         self.record_press(player)
@@ -1010,21 +990,24 @@ class SymbaductFactory(Factory):
         if add_point:
             self.add_point(player)
 
-
-
+        self.time_previous_press[player] = self.now
 
     def fn_press(self, player, fn):
         self.set_time()
+
+        self.time_fn_click[player] = self.now
         self.all_click += 1
         if player == 0:
             self.ref_click += 1
         else:
             self.adj_click += 1
+
+        fn_change = ''
+        new_fn_status = ''
+
         if player > 0:
-            # TODO: record adj click?
-            # self.record_fn_press(player, fn)
-            return
-        if 'fn' in cfg.cond['type']:
+            pass
+        elif 'fn' in cfg.cond['type']:
             self.fn_trial = 1
             if self.fn_change is None:
                 if fn == 'f':
@@ -1050,13 +1033,15 @@ class SymbaductFactory(Factory):
                 self.fn_status = new_fn_status
                 self.fix_trial_settings(fix_schedule=True)
 
+        self.record_fn_click(player, fn, fn_change, new_fn_status)
+        self.time_previous_fn_click[player] = self.now
+
     def change_fn_status(self):
         for p in self.get_players_and_observer():
             p.callRemote(cmd.ChangeFnStatus)
 
     def add_point(self, player):
         self.set_time()
-        self.time_previous_add_point[player] = self.time_add_point[player]
         self.time_add_point[player] = self.now
         self.points[player] += 1
         for p in self.get_players_and_observer():
@@ -1064,8 +1049,6 @@ class SymbaductFactory(Factory):
                          player=player,
                          points=self.points)
         if player == 0:
-            # if cfg.cond['type'] == 'fn-self':
-            #     self.reset_fn_status(player)
             self.point_counter += 1
             if self.point_counter >= cfg.cond['end after']:
                 self.point_counter = 0
@@ -1086,47 +1069,11 @@ class SymbaductFactory(Factory):
             self.fn_trials.append(self.fn_trial)
             self.fn_trial = 0
         self.record_point(player)
+        self.time_previous_add_point[player] = self.now
 
     def reset_fn_status(self):
         self.fn_status = 1
         self.fix_trial_settings(fix_schedule=True)
-
-    # ADMIN STUFF
-
-    #
-    #
-    # self.record_choice(player)
-    # cfg.exp['save']['cycle'] += 1
-    # if self.n_correct >= cfg.exp['performance_criteria']['corrects required']:
-    #     cfg.exp['save']['window results'].append(True)
-    # else:
-    #     cfg.exp['save']['window results'].append(False)
-    # window_size = cfg.exp['performance_criteria']['window size']
-    # cfg.exp['save']['window results'] = cfg.exp['save']['window results'][-1*window_size:]
-    # cfg.exp.write()
-    # self.check_end_criteria()
-    # self.update_observer()
-    # self.update_config()
-
-    # def update_observer(self):
-    #     for p in self.get_observer():
-    #         p.callRemote(cmd.UpdateObserver,
-    #                      cycle=cfg.exp['save']['cycle'],
-    #                      percent_correct=self.percent_correct,
-    #                      consec_correct=self.consec_correct,
-    #                      ).addErrback(bailout)
-
-    #
-    # def start_feedback(self):
-    #     for p in self.get_players_and_observer():
-    #         p.callRemote(cmd.StartFeedback,
-    #                      ).addErrback(bailout)
-    #     self.delay_calls['change points'] = reactor.callLater(cfg.exp['durations']['delay change points'],
-    #                                                           self.change_points)
-    #     self.delay_calls['restart_choice'] = reactor.callLater(cfg.exp['durations']['feedback'],
-    #                                                            self.restart_choice)
-
-
 
     def expire_session(self):
         if self.end:
@@ -1147,6 +1094,8 @@ class SymbaductFactory(Factory):
     def record_press(self, player):
         t_start = self.time_previous_press[player]
         data = dict(self.line,
+                    condition=cfg.exp['save']['condition'],
+                    name=self.condition_name,
                     event='press',
                     hour=self.hour,
                     all_click=self.all_click,
@@ -1160,7 +1109,7 @@ class SymbaductFactory(Factory):
                     player=player,
                     t_start=n_uni(t_start),
                     t_response=n_uni(self.now),
-                    latency=n_uni(t_start - self.now),
+                    latency=n_uni(self.now - t_start),
                     ref_points=self.points[0],
                     adj_points=self.points[1]
                     )
@@ -1170,7 +1119,10 @@ class SymbaductFactory(Factory):
 
         t_start = self.time_previous_add_point[player]
         data = dict(self.line,
+                    condition=cfg.exp['save']['condition'],
+                    name=self.condition_name,
                     event='point',
+                    player=player,
                     hour=self.hour,
                     all_click=self.all_click,
                     ref_click=self.ref_click,
@@ -1180,30 +1132,38 @@ class SymbaductFactory(Factory):
                     adj_press=self.adj_press,
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
-                    player=player,
                     t_start=n_uni(t_start),
                     t_response=n_uni(self.now),
-                    latency=n_uni(t_start - self.now),
+                    latency=n_uni(self.now - t_start),
                     ref_points=self.points[0],
                     adj_points=self.points[1]
                     )
         self.record_line(**data)
 
-    def record_fn_press(self, player, fn, fn_change='', fn_status=''):
-        t_start = n_uni(self.time_add_point[player])
+    def record_fn_click(self, player, fn, fn_change='', fn_status=''):
+        t_start = self.time_previous_fn_click[player]
         data = dict(self.line,
+                    condition=cfg.exp['save']['condition'],
+                    name=self.condition_name,
                     event='fn_press',
-                    hour=self.hour,
-                    description="fn change:" + str(fn_change) + " fn status:" + str(fn_status),
-                    # all_click=self.,
-                    ref_click=cfg.exp['save']['ref clicks'],
-                    target_click=cfg.exp['save']['adj clicks'],
                     player=player,
+                    hour=self.hour,
+                    all_click=self.all_click,
+                    ref_click=self.ref_click,
+                    adj_click=self.adj_click,
+                    all_press=self.all_press,
+                    ref_press=self.ref_press,
+                    adj_press=self.adj_press,
+                    ref_fn_click=self.ref_fn_click,
+                    adj_fn_click=self.adj_fn_click,
+                    response=fn,
+                    fn_change=fn_change,
+                    fn_status=fn_status,
                     t_start=n_uni(t_start),
                     t_response=n_uni(self.now),
-                    latency=n_uni(t_start - self.now),
-                    ref_points='',
-                    adj_points=''
+                    latency=n_uni(self.now - t_start),
+                    ref_points=self.points[0],
+                    adj_points=self.points[1]
                     )
         self.record_line(**data)
 
@@ -1223,6 +1183,24 @@ class SymbaductFactory(Factory):
                     hour=self.hour,
                     t_start=n_uni(0))
         self.record_line(**data)
+
+    def record_condition_start(self):
+        data = dict(self.line,
+                    condition=cfg.exp['save']['condition'],
+                    name=self.condition_name,
+                    event='start condition',
+                    hour=self.hour,
+                    t_start=n_uni(self.now))
+        self.record_line(**data)
+
+    def record_condition_end(self):
+        data = dict(self.line,
+                    event='start condition',
+                    description=cfg.exp['save']['condition'],
+                    hour=self.hour,
+                    t_start=n_uni(self.now))
+        self.record_line(**data)
+
 
     #
     def get_players_and_observer(self):
