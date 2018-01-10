@@ -222,6 +222,7 @@ class Protocol(amp.AMP):
         for p in fac.get_players_and_observer():
             p.callRemote(cmd.InstructionEnd)
         fac.reset_time_variables()
+        fac.start_time_limit()
         return {}
 
     @cmd.AddAdmin.responder
@@ -361,6 +362,7 @@ class SymbaductFactory(Factory):
         self.condition_name = ''
         self.condition_ended = False
         self.paused = False
+        self.condition_expired = False
 
 
         # options: ratio, interval, (?)
@@ -387,9 +389,9 @@ class SymbaductFactory(Factory):
         self.time_previous_add_point = [0, 0]
         self.time_add_point = [0, 0]
 
-        # end variables
-        self.end = False
-        self.end_reason = ''
+        # # end variables
+        # self.end = False
+        # self.end_reason = ''
 
         # to be defined @ create output
         self.output_path = ''
@@ -462,6 +464,8 @@ class SymbaductFactory(Factory):
         self.fn_trial = 0
         self.fn_trials = []
 
+        self.condition_expired = False
+
         self.record_condition_start()
 
         self.fix_condition_settings()
@@ -477,6 +481,9 @@ class SymbaductFactory(Factory):
         return False
 
     def end_experiment(self):
+        self.unschedule_all()
+        cfg.exp['save']['game over'] = True
+        cfg.exp.write()
         for p in self.get_players_and_observer():
             p.callRemote(cmd.EndExperiment).addErrback(bailout)
 
@@ -578,7 +585,18 @@ class SymbaductFactory(Factory):
             cfg.exp['save']['part'] += 1
             self.start_part()
 
+    def expire_condition(self):
+        print 'CONDITION EXPIRED'
+        self.condition_expired = True
+
+        self.update_observer()
+
+        self.end_condition()
+
     def end_condition(self):
+
+        if 'time limit' in self.delay_calls.values() and self.delay_calls['time limit'].active():
+            self.delay_calls['time limit'].cancel()
 
         self.record_condition_end()
 
@@ -598,6 +616,11 @@ class SymbaductFactory(Factory):
             self.start_condition()
 
     def check_condition_move(self):
+
+        # TODO: check if expired condition always keep person in condition (currenty: yes)
+        if self.condition_expired:
+            return
+
         if cfg.cond['stay based on fn change']:
             if self.fn_total_change == 0:
                 # stay in condition (no change made)
@@ -626,6 +649,8 @@ class SymbaductFactory(Factory):
                 p.callRemote(cmd.ShowInstruction,
                              ref=pickle.dumps(cfg.instructions[instruction]['ref']),
                              target=pickle.dumps(cfg.instructions[instruction]['target'])).addErrback(bailout)
+        else:
+            self.start_time_limit()
 
     def fix_trial_settings(self, fix_schedule=False):
 
@@ -635,6 +660,10 @@ class SymbaductFactory(Factory):
         self.fix_ref_color()
         if cfg.cond['show adj']:
             self.fix_adj_color()
+
+    def start_time_limit(self):
+        time_limit = cfg.cond['time limit'] * 60
+        self.delay_calls['time limit'] = reactor.callLater(time_limit, self.expire_condition)
 
     def fix_schedule(self):
         # only used by fn conditions
@@ -895,7 +924,12 @@ class SymbaductFactory(Factory):
         else:
             fn_percent_reduce = n_uni(self.fn_percent_reduce)
 
-        data_list = [u'condition: ' + unicode(cfg.exp['save']['condition']),
+        condition = unicode(cfg.exp['save']['condition'])
+        if self.condition_expired:
+            condition += u' EXPIRED!!!'
+        print str(condition)
+
+        data_list = [u'condition: ' + condition,
                     u'name: ' + unicode(self.condition_name),
                     u'time: ' + n_uni(self.now),
                     u'ref_press: ' + unicode(self.ref_press),
@@ -1011,21 +1045,21 @@ class SymbaductFactory(Factory):
         self.fn_status = 1
         self.fix_trial_settings(fix_schedule=True)
 
-    def expire_session(self):
-        if self.end:
-            return
-        self.end = True
-        self.end_reason += '-expired'
+    # def expire_session(self):
+    #     if self.end:
+    #         return
+    #     self.end = True
+    #     self.end_reason += '-expired'
 
         # self.end_session('expired')
 
-    def end_session(self, status='criteria'):
-        self.unschedule_all()
-        self.set_time()
-        for p in self.get_players_and_observer():
-            p.callRemote(cmd.EndSession,
-                         status=status).addErrback(bailout)
-        self.record_end(status)
+    # def end_session(self, status='criteria'):
+    #     self.unschedule_all()
+    #     self.set_time()
+    #     for p in self.get_players_and_observer():
+    #         p.callRemote(cmd.EndSession,
+    #                      status=status).addErrback(bailout)
+    #     self.record_end(status)
 
     def record_press(self, player):
         t_start = self.time_previous_press[player]
@@ -1034,7 +1068,8 @@ class SymbaductFactory(Factory):
         if player == 0 and self.ref_press > 1:
             self.latency_cond += latency
             self.latency_local.append(latency)
-            self.latency_local = self.latency_local[-10:]
+            lat_window = cfg.exp['parameters']['local frequency window']
+            self.latency_local = self.latency_local[(-1)*lat_window:]
 
             self.freq_cond = ((self.ref_press - 1) / self.latency_cond)
             self.freq_local = (len(self.latency_local) / sum(self.latency_local))
@@ -1138,15 +1173,15 @@ class SymbaductFactory(Factory):
                     )
         self.record_line(**data)
 
-    def record_end(self, reason):
-        data = dict(self.line,
-                    event='end session',
-                    hour=self.hour,
-                    description=reason,
-                    t_start=n_uni(0),
-                    t_response=n_uni(self.now),
-                    )
-        self.record_line(**data)
+    # def record_end(self, reason):
+    #     data = dict(self.line,
+    #                 event='end session',
+    #                 hour=self.hour,
+    #                 description=reason,
+    #                 t_start=n_uni(0),
+    #                 t_response=n_uni(self.now),
+    #                 )
+    #     self.record_line(**data)
 
     def record_session_start(self):
         data = dict(self.line,
@@ -1171,10 +1206,15 @@ class SymbaductFactory(Factory):
         else:
             fn_percent_reduce = n_uni(self.fn_percent_reduce)
 
+        description = ''
+        if self.condition_expired:
+            description = 'EXPIRED'
+
         data = dict(self.line,
                     condition=cfg.exp['save']['condition'],
                     name=self.condition_name,
                     event='end condition',
+                    description=description,
                     hour=self.hour,
                     all_click=self.all_click,
                     ref_click=self.ref_click,
@@ -1431,6 +1471,13 @@ def main():
 
         cfg.instructions.write()
 
+    # TEST GAME OVER
+
+    if cfg.exp['save']['game over'] or \
+            cfg.exp['save']['condition'] > len(text_to_list(cfg.exp['conditions']['conditions'])):
+        cfg.exp['save']['game over'] = True
+        cfg.exp.write()
+        eg.msgbox('GAME OVER')
 
     fac = SymbaductFactory(utostr(group))
     log.startLogging(sys.stdout)

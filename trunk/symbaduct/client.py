@@ -500,18 +500,21 @@ class ScreenManagerMain(ScreenManager):
     def session_unpause(self):
         self.go_to('game')
 
-    def session_end(self, status):
-        end_text = u'Sessão encerrada:\n\navise o pesquisador'
-        if obs:
-            end_text += u'\n\n{}\n{}'.format(status, App.get_running_app().observer_message)
-        self.get_screen('end').ids.end_label.text = end_text
-        self.go_to('end')
+    # def session_end(self, status):
+    #     end_text = u'Sessão encerrada:\n\navise o pesquisador'
+    #     if obs:
+    #         end_text += u'\n\n{}\n{}'.format(status, App.get_running_app().observer_message)
+    #         self.get_screen('end').ids.end_label.font_size = '14dp'
+    #     self.get_screen('end').ids.end_label.text = end_text
+    #     self.go_to('end')
 
     def end_experiment(self):
-        end_text = u'Pesquisa encerrada:\n\navise o pesquisador'
+        end_text = u'Sessão encerrada:\n\navise o pesquisador'
         if obs:
+            end_text = u'Pesquisa encerrada:\n'
             game_message_text = self.get_screen('game').ids.label_game_message.text
             end_text += u'\n\n{}'.format(game_message_text)
+            self.get_screen('end').ids.end_label.font_size = '14dp'
 
         self.get_screen('end').ids.end_label.text = end_text
         self.go_to('end')
@@ -582,13 +585,13 @@ class ClientAMP(amp.AMP):
         app.session_unpause()
         return {}
 
-    @cmd.EndSession.responder
-    def end_session(self, status):
-        print 'session ended. status:', status
-        # TODO: block game
-
-        sm.session_end(status)
-        return {}
+    # @cmd.EndSession.responder
+    # def end_session(self, status):
+    #     print 'session ended. status:', status
+    #     # TODO: block game
+    #
+    #     sm.session_end(status)
+    #     return {}
 
     @cmd.EndExperiment.responder
     def end_experiment(self):

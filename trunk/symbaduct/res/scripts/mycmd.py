@@ -182,6 +182,6 @@ class UpdateObserver(amp.Command):
 ###########################################
 # BIG EVENTS
 
-class EndSession(amp.Command):   # FROM SERVER - TO ALL
-    arguments = [('status', amp.String())]
-    response = []
+# class EndSession(amp.Command):   # FROM SERVER - TO ALL
+#     arguments = [('status', amp.String())]
+#     response = []
