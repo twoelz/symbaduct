@@ -489,7 +489,7 @@ class ScreenManagerMain(ScreenManager):
 
         if obs:
             game_message_label = self.get_screen('game').ids.label_game_message
-            game_message_label.font_size = '20dp'
+            game_message_label.font_size = '14dp'
             game_message_text = game_message_label.text
             info = u'PAUSA\n\n' +  game_message_text
 
@@ -646,11 +646,11 @@ class ClientAMP(amp.AMP):
     def point_press(self):
         self.callRemote(cmd.PointPress)
 
-    def n_press(self):
-        self.callRemote(cmd.NPress)
+    def n_click(self):
+        self.callRemote(cmd.NClick)
 
-    def f_press(self):
-        self.callRemote(cmd.FPress)
+    def f_click(self):
+        self.callRemote(cmd.FClick)
 
 class ClientFactory(_InstanceFactory):
     """Factory used by ClientCreator, using ClientAMP protocol."""
@@ -888,13 +888,13 @@ class ClientApp(App):
         if not obs:
             fac.client.point_press()
 
-    def n_press(self):
+    def n_click(self):
         if not obs:
-            fac.client.n_press()
+            fac.client.n_click()
 
-    def f_press(self):
+    def f_click(self):
         if not obs:
-            fac.client.f_press()
+            fac.client.f_click()
 
     def show_adj(self, show):
         gm = sm.get_screen('game')

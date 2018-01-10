@@ -263,14 +263,14 @@ class Protocol(amp.AMP):
         fac.point_press(self.client_count)
         return {}
 
-    @cmd.NPress.responder
-    def n_press(self):
-        fac.fn_press(self.client_count, 'n')
+    @cmd.NClick.responder
+    def n_click(self):
+        fac.fn_click(self.client_count, 'n')
         return {}
 
-    @cmd.FPress.responder
-    def f_press(self):
-        fac.fn_press(self.client_count, 'f')
+    @cmd.FClick.responder
+    def f_click(self):
+        fac.fn_click(self.client_count, 'f')
         return {}
 
 
@@ -332,12 +332,22 @@ class SymbaductFactory(Factory):
         # fn_status: 0 = lower, 2 = higher, 1 = default/middle
         self.fn_status = 1
 
+        # frequencies by condition and local (10 ultimas)
+        self.freq_cond = 0
+        self.freq_local = 0
+
+        # latencies by condition and
+        self.latency_cond = 0
+        self.latency_local = []
+
         # lists for multiple schedule settings
         self.mult_sched = []
 
         self.fn_reduce_change = 0
         self.fn_increase_change = 0
         self.fn_total_change = 0
+
+        self.fn_percent_reduce = 'N/A'
 
         self.fn_trial = 0
         self.fn_trials = []
@@ -435,9 +445,19 @@ class SymbaductFactory(Factory):
         self.ref_fn_click = 0
         self.adj_fn_click = 0
 
+        self.freq_cond = 0
+        self.freq_local = 0
+
+        self.latency_cond = 0
+        self.latency_local = []
+
+
+
         self.fn_reduce_change = 0
         self.fn_increase_change = 0
         self.fn_total_change = 0
+
+        self.fn_percent_reduce = 'N/A'
 
         self.fn_trial = 0
         self.fn_trials = []
@@ -587,10 +607,10 @@ class SymbaductFactory(Factory):
                 return
         if cfg.cond['stay based on fn extinction']:
             min_ext = cfg.cond['min fn extinction trials']
-            if sum(self.fn_trial[-1*min_ext:]) > 0:
+            if sum(self.fn_trials[-1*min_ext:]) > 0:
                 return
             ext_window = cfg.cond['fn extinction trials window']
-            ext_window = self.fn_trial[-1*ext_window:]
+            ext_window = self.fn_trials[-1*ext_window:]
             if sum(ext_window) / float(len(ext_window)) > cfg.cond['percentage fn extinction trials']:
                 return
         # move on
@@ -705,12 +725,16 @@ class SymbaductFactory(Factory):
              'all_press',
              'ref_press',
              'adj_press',
+             'freq_cond',
+             'freq_local',
              'ref_fn_click',
              'adj_fn_click',
              'response',
              'fn_setup',
              'fn_direction',
              'fn_status',
+             'fn_trials',
+             'fn_percent_reduce',
              u't_start',
              't_response',
              u'latency',
@@ -733,12 +757,16 @@ class SymbaductFactory(Factory):
             all_press='',
             ref_press='',
             adj_press='',
+            freq_cond='',
+            freq_local='',
             ref_fn_click='',
             adj_fn_click='',
             response='',
             fn_setup='',
             fn_direction='',
             fn_status='',
+            fn_trials='',
+            fn_percent_reduce='',
             t_start='',
             t_response='',
             latency='',
@@ -760,12 +788,16 @@ class SymbaductFactory(Factory):
             d['all_press'],
             d['ref_press'],
             d['adj_press'],
+            d['freq_cond'],
+            d['freq_local'],
             d['ref_fn_click'],
             d['adj_fn_click'],
             d['response'],
             d['fn_setup'],
             d['fn_direction'],
             d['fn_status'],
+            d['fn_trials'],
+            d['fn_percent_reduce'],
             d['t_start'],
             d['t_response'],
             d['latency'],
@@ -829,6 +861,7 @@ class SymbaductFactory(Factory):
         if player == 0:
             self.ref_click += 1
             self.ref_press += 1
+
         else:
             self.adj_click += 1
             self.adj_press += 1
@@ -856,14 +889,24 @@ class SymbaductFactory(Factory):
         self.update_observer()
 
     def update_observer(self):
+
+        if self.fn_percent_reduce == 'N/A':
+            fn_percent_reduce = unicode(self.fn_percent_reduce)
+        else:
+            fn_percent_reduce = n_uni(self.fn_percent_reduce)
+
         data_list = [u'condition: ' + unicode(cfg.exp['save']['condition']),
                     u'name: ' + unicode(self.condition_name),
                     u'time: ' + n_uni(self.now),
                     u'ref_press: ' + unicode(self.ref_press),
                     u'adj_press: ' + unicode(self.adj_press),
+                    u'freq_cond: ' + n_uni(self.freq_cond),
+                    u'freq_local: ' + n_uni(self.freq_local),
                     u'ref_fn_click: ' + unicode(self.ref_fn_click),
                     u'adj_fn_click: ' + unicode(self.adj_fn_click),
                     u'fn_status: ' + unicode(self.fn_status),
+                    u'fn_trials: ' + unicode(self.fn_trials[-18:]),
+                    u'fn_percent_reduce: ' + fn_percent_reduce,
                     u'ref_points: ' + unicode(self.points[0]),
                     u'adj_points: ' + unicode(self.points[1])]
         info = u'\n'.join([unicode(x) for x in data_list])
@@ -871,15 +914,17 @@ class SymbaductFactory(Factory):
             p.callRemote(cmd.UpdateObserver,
                          info=info)
 
-    def fn_press(self, player, fn):
+    def fn_click(self, player, fn):
         self.set_time()
 
         self.time_fn_click[player] = self.now
         self.all_click += 1
         if player == 0:
             self.ref_click += 1
+            self.ref_fn_click += 1
         else:
             self.adj_click += 1
+            self.adj_fn_click += 1
 
         fn_setup = ''
         fn_direction = ''
@@ -910,13 +955,15 @@ class SymbaductFactory(Factory):
                 fn_direction = 1
                 new_fn_status = min(self.fn_status + 1, 2)
             self.fn_total_change += 1
-            # self.record_fn_press(player, fn, fn_setup, new_fn_status)
+            self.fn_percent_reduce = (float(self.fn_reduce_change) / float(self.fn_total_change)) * 100
 
             self.record_fn_click(player, fn, fn_setup, fn_direction, new_fn_status)
 
             if new_fn_status != self.fn_status:
                 self.fn_status = new_fn_status
                 self.fix_trial_settings(fix_schedule=True)
+
+        self.update_observer()
 
         self.time_previous_fn_click[player] = self.now
 
@@ -982,6 +1029,16 @@ class SymbaductFactory(Factory):
 
     def record_press(self, player):
         t_start = self.time_previous_press[player]
+        latency = self.now - t_start
+
+        if player == 0 and self.ref_press > 1:
+            self.latency_cond += latency
+            self.latency_local.append(latency)
+            self.latency_local = self.latency_local[-10:]
+
+            self.freq_cond = ((self.ref_press - 1) / self.latency_cond)
+            self.freq_local = (len(self.latency_local) / sum(self.latency_local))
+
         data = dict(self.line,
                     condition=cfg.exp['save']['condition'],
                     name=self.condition_name,
@@ -993,12 +1050,14 @@ class SymbaductFactory(Factory):
                     all_press=self.all_press,
                     ref_press=self.ref_press,
                     adj_press=self.adj_press,
+                    freq_cond=self.freq_cond,
+                    freq_local=self.freq_local,
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
                     player=player,
                     t_start=n_uni(t_start),
                     t_response=n_uni(self.now),
-                    latency=n_uni(self.now - t_start),
+                    latency=n_uni(latency),
                     ref_points=self.points[0],
                     adj_points=self.points[1]
                     )
@@ -1007,6 +1066,12 @@ class SymbaductFactory(Factory):
     def record_point(self, player):
 
         t_start = self.time_previous_add_point[player]
+
+        if self.fn_percent_reduce == 'N/A':
+            fn_percent_reduce = unicode(self.fn_percent_reduce)
+        else:
+            fn_percent_reduce = n_uni(self.fn_percent_reduce)
+
         data = dict(self.line,
                     condition=cfg.exp['save']['condition'],
                     name=self.condition_name,
@@ -1019,8 +1084,13 @@ class SymbaductFactory(Factory):
                     all_press=self.all_press,
                     ref_press=self.ref_press,
                     adj_press=self.adj_press,
+                    freq_cond=self.freq_cond,
+                    freq_local=self.freq_local,
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
+                    fn_status=unicode(self.fn_status),
+                    fn_trials=unicode(sum(self.fn_trials)),
+                    fn_percent_reduce=fn_percent_reduce,
                     t_start=n_uni(t_start),
                     t_response=n_uni(self.now),
                     latency=n_uni(self.now - t_start),
@@ -1031,10 +1101,17 @@ class SymbaductFactory(Factory):
 
     def record_fn_click(self, player, fn, fn_setup, fn_direction, new_fn_status):
         t_start = self.time_previous_fn_click[player]
+
+        if self.fn_percent_reduce == 'N/A':
+            fn_percent_reduce = unicode(self.fn_percent_reduce)
+        else:
+            fn_percent_reduce = n_uni(self.fn_percent_reduce)
+
+
         data = dict(self.line,
                     condition=cfg.exp['save']['condition'],
                     name=self.condition_name,
-                    event='fn_press',
+                    event='fn_click',
                     player=player,
                     hour=self.hour,
                     all_click=self.all_click,
@@ -1043,12 +1120,16 @@ class SymbaductFactory(Factory):
                     all_press=self.all_press,
                     ref_press=self.ref_press,
                     adj_press=self.adj_press,
+                    freq_cond=self.freq_cond,
+                    freq_local=self.freq_local,
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
                     response=fn,
                     fn_setup=fn_setup,
                     fn_direction=fn_direction,
                     fn_status=new_fn_status,
+                    fn_trials=unicode(sum(self.fn_trials)),
+                    fn_percent_reduce=fn_percent_reduce,
                     t_start=n_uni(t_start),
                     t_response=n_uni(self.now),
                     latency=n_uni(self.now - t_start),
@@ -1084,6 +1165,12 @@ class SymbaductFactory(Factory):
         self.record_line(**data)
 
     def record_condition_end(self):
+
+        if self.fn_percent_reduce == 'N/A':
+            fn_percent_reduce = unicode(self.fn_percent_reduce)
+        else:
+            fn_percent_reduce = n_uni(self.fn_percent_reduce)
+
         data = dict(self.line,
                     condition=cfg.exp['save']['condition'],
                     name=self.condition_name,
@@ -1095,11 +1182,15 @@ class SymbaductFactory(Factory):
                     all_press=self.all_press,
                     ref_press=self.ref_press,
                     adj_press=self.adj_press,
+                    freq_cond=self.freq_cond,
+                    freq_local=self.freq_local,
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
+                    fn_trials=unicode(sum(self.fn_trials)),
+                    fn_percent_reduce=fn_percent_reduce,
                     t_start=n_uni(self.time_condition),
                     t_response=n_uni(self.now),
-                    latency=n_uni(self.now - self.time_condition),
+                    latency=n_uni(self.latency_cond),
                     )
         self.record_line(**data)
 

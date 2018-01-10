@@ -33,10 +33,10 @@ class RequestInstructionEnd(amp.Command):
 class PointPress(amp.Command):
     response = []
 
-class NPress(amp.Command):
+class NClick(amp.Command):
     response = []
 
-class FPress(amp.Command):
+class FClick(amp.Command):
     response = []
 
 
