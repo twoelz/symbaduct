@@ -158,11 +158,6 @@ class Protocol(amp.AMP):
 
     # command methods
 
-    # @cmd.StopServer.responder
-    # def stop_server(self):
-    #     fac.stop_server()
-    #     return {}
-
     @cmd.AddClient.responder
     def add_client(self, observer):
         '''client attempts to connect: server allows it if there is
@@ -213,8 +208,6 @@ class Protocol(amp.AMP):
 
         fac.start_session()
 
-        # for p in fac.observers.itervalues():
-        #     p.callRemote(cmd.GameReady)
         return {}
 
     @cmd.RequestInstructionEnd.responder
@@ -363,6 +356,8 @@ class SymbaductFactory(Factory):
         self.condition_ended = False
         self.paused = False
         self.condition_expired = False
+        self.stay_in_condition = False
+        self.do_not_update_observer = False
 
 
         # options: ratio, interval, (?)
@@ -464,8 +459,6 @@ class SymbaductFactory(Factory):
         self.fn_trial = 0
         self.fn_trials = []
 
-        self.condition_expired = False
-
         self.record_condition_start()
 
         self.fix_condition_settings()
@@ -512,6 +505,8 @@ class SymbaductFactory(Factory):
 
         self.set_time()
         self.fn_setup = None
+
+        self.schedule = ['', '']
 
         part = self.get_part()
 
@@ -576,7 +571,6 @@ class SymbaductFactory(Factory):
                 self.mult_sched.append(i)
 
     def end_part(self):
-        # TODO: record end part
         self.count_ratio_click = [0, 0]
         part = cfg.exp['save']['part']
         if part >= cfg.cond['parts']:
@@ -598,15 +592,18 @@ class SymbaductFactory(Factory):
         if 'time limit' in self.delay_calls.values() and self.delay_calls['time limit'].active():
             self.delay_calls['time limit'].cancel()
 
+        self.check_condition_move()
+
+        self.update_observer()
+        self.do_not_update_observer = True
+
         self.record_condition_end()
 
         cfg.exp['save']['part'] = 1
-
-        self.check_condition_move()
+        cfg.exp.write()
 
         if self.check_end_experiment():
             return
-
 
         if cfg.cond['pause']:
             self.condition_ended = True
@@ -616,6 +613,7 @@ class SymbaductFactory(Factory):
             self.start_condition()
 
     def check_condition_move(self):
+        self.stay_in_condition = True
 
         # TODO: check if expired condition always keep person in condition (currenty: yes)
         if self.condition_expired:
@@ -634,10 +632,13 @@ class SymbaductFactory(Factory):
                 return
             ext_window = cfg.cond['fn extinction trials window']
             ext_window = self.fn_trials[-1*ext_window:]
-            if sum(ext_window) / float(len(ext_window)) > cfg.cond['percentage fn extinction trials']:
+            if sum(ext_window) / float(len(ext_window)) > 1.0 - cfg.cond['percentage fn extinction trials']:
                 return
         # move on
         cfg.exp['save']['condition'] += 1
+        cfg.exp.write()
+
+        self.stay_in_condition = False
 
     def fix_condition_settings(self):
         for p in self.get_players_and_observer():
@@ -759,6 +760,12 @@ class SymbaductFactory(Factory):
              'ref_fn_click',
              'adj_fn_click',
              'response',
+             'ref_sched',
+             'ref_sched_val',
+             'adj_sched',
+             'adj_sched_val',
+             'fn_total',
+             'fn_reduce',
              'fn_setup',
              'fn_direction',
              'fn_status',
@@ -791,6 +798,12 @@ class SymbaductFactory(Factory):
             ref_fn_click='',
             adj_fn_click='',
             response='',
+            ref_sched='',
+            ref_sched_val='',
+            adj_sched='',
+            adj_sched_val='',
+            fn_total='',
+            fn_reduce='',
             fn_setup='',
             fn_direction='',
             fn_status='',
@@ -822,6 +835,12 @@ class SymbaductFactory(Factory):
             d['ref_fn_click'],
             d['adj_fn_click'],
             d['response'],
+            d['ref_sched'],
+            d['ref_sched_val'],
+            d['adj_sched'],
+            d['adj_sched_val'],
+            d['fn_total'],
+            d['fn_reduce'],
             d['fn_setup'],
             d['fn_direction'],
             d['fn_status'],
@@ -914,8 +933,10 @@ class SymbaductFactory(Factory):
             self.add_point(player)
 
         self.time_previous_press[player] = self.now
-
-        self.update_observer()
+        if self.do_not_update_observer:
+            self.do_not_update_observer = False
+        else:
+            self.update_observer()
 
     def update_observer(self):
 
@@ -927,7 +948,8 @@ class SymbaductFactory(Factory):
         condition = unicode(cfg.exp['save']['condition'])
         if self.condition_expired:
             condition += u' EXPIRED!!!'
-        print str(condition)
+        elif self.stay_in_condition:
+            condition += u' STAY!!!'
 
         data_list = [u'condition: ' + condition,
                     u'name: ' + unicode(self.condition_name),
@@ -941,6 +963,8 @@ class SymbaductFactory(Factory):
                     u'fn_status: ' + unicode(self.fn_status),
                     u'fn_trials: ' + unicode(self.fn_trials[-18:]),
                     u'fn_percent_reduce: ' + fn_percent_reduce,
+                    u'fn_total:', + unicode(self.fn_total_change),
+                    u'fn_reduce: ', + unicode(self.fn_reduce_change),
                     u'ref_points: ' + unicode(self.points[0]),
                     u'adj_points: ' + unicode(self.points[1])]
         info = u'\n'.join([unicode(x) for x in data_list])
@@ -1038,6 +1062,14 @@ class SymbaductFactory(Factory):
         self.record_point(player)
         self.time_previous_add_point[player] = self.now
 
+        if player == 0 and 'fn' in cfg.cond['type'] and cfg.cond['end on extinction']:
+            min_ext = cfg.cond['min fn extinction trials']
+            if sum(self.fn_trials[-1*min_ext:]) == 0:
+                ext_window = cfg.cond['fn extinction trials window']
+                if len(self.fn_trials) >= ext_window:
+                    ext_window = self.fn_trials[-1*ext_window:]
+                    if sum(ext_window) / float(len(ext_window)) <= 1.0 - cfg.cond['percentage fn extinction trials']:
+                        end_part = True
         if end_part:
             self.end_part()
 
@@ -1123,6 +1155,8 @@ class SymbaductFactory(Factory):
                     freq_local=self.freq_local,
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
+                    fn_total=unicode(self.fn_total_change),
+                    fn_reduce=unicode(self.fn_reduce_change),
                     fn_status=unicode(self.fn_status),
                     fn_trials=unicode(sum(self.fn_trials)),
                     fn_percent_reduce=fn_percent_reduce,
@@ -1160,6 +1194,8 @@ class SymbaductFactory(Factory):
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
                     response=fn,
+                    fn_total=unicode(self.fn_total_change),
+                    fn_reduce=unicode(self.fn_reduce_change),
                     fn_setup=fn_setup,
                     fn_direction=fn_direction,
                     fn_status=new_fn_status,
@@ -1209,6 +1245,11 @@ class SymbaductFactory(Factory):
         description = ''
         if self.condition_expired:
             description = 'EXPIRED'
+        elif self.stay_in_condition:
+            description = 'STAY'
+
+        self.condition_expired = False
+        self.stay_in_condition = False
 
         data = dict(self.line,
                     condition=cfg.exp['save']['condition'],
@@ -1226,6 +1267,8 @@ class SymbaductFactory(Factory):
                     freq_local=self.freq_local,
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
+                    fn_total=unicode(self.fn_total_change),
+                    fn_reduce=unicode(self.fn_reduce_change),
                     fn_trials=unicode(sum(self.fn_trials)),
                     fn_percent_reduce=fn_percent_reduce,
                     t_start=n_uni(self.time_condition),
