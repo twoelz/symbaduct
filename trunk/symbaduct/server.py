@@ -361,9 +361,9 @@ class SymbaductFactory(Factory):
 
 
         # options: ratio, interval, (?)
-        self.schedule = ['interval', 'ratio']
-        self.ratio = [5, 5]
-        self.interval = [3.0, 3.0]
+        self.schedule = ['', ''] # interval or ratio
+        self.ratio = ['', ''] # integers
+        self.interval = ['', ''] # floats
 
         # time variables
         self.hour = '-'.join([str(x) for x in time.localtime()[:4]])
@@ -465,6 +465,10 @@ class SymbaductFactory(Factory):
 
         self.start_part()
 
+        if cfg.cond['use instruction']:
+            for p in self.get_observer():
+                p.callRemote(cmd.InfoInstruction)
+
     def check_end_experiment(self):
         '''returns True if ended'''
 
@@ -555,6 +559,8 @@ class SymbaductFactory(Factory):
                 raise Exception('invalid schedule configuration for Adj')
 
         self.fix_trial_settings()
+
+        self.update_observer()
 
     def start_mult_sched(self):
         self.mult_sched = []
@@ -951,6 +957,24 @@ class SymbaductFactory(Factory):
         elif self.stay_in_condition:
             condition += u' STAY!!!'
 
+        ref_sched = self.schedule[0]
+        adj_sched = self.schedule[1]
+        ref_sched_val = ''
+        adj_sched_val = ''
+
+        if ref_sched == 'ratio':
+            ref_sched_val = self.ratio[0]
+        elif ref_sched == 'interval':
+            ref_sched_val = self.interval[0]
+
+        if adj_sched == 'ratio':
+            adj_sched_val = self.ratio[1]
+        elif adj_sched == 'interval':
+            adj_sched_val = self.interval[1]
+
+        ref_sched = unicode(ref_sched) + unicode(ref_sched_val)
+        adj_sched = unicode(adj_sched) + unicode(adj_sched_val)
+
         data_list = [u'condition: ' + condition,
                     u'name: ' + unicode(self.condition_name),
                     u'time: ' + n_uni(self.now),
@@ -958,13 +982,15 @@ class SymbaductFactory(Factory):
                     u'adj_press: ' + unicode(self.adj_press),
                     u'freq_cond: ' + n_uni(self.freq_cond),
                     u'freq_local: ' + n_uni(self.freq_local),
+                    u'ref_sched: ' + ref_sched,
+                    u'adj sched: ' + adj_sched,
                     u'ref_fn_click: ' + unicode(self.ref_fn_click),
                     u'adj_fn_click: ' + unicode(self.adj_fn_click),
                     u'fn_status: ' + unicode(self.fn_status),
                     u'fn_trials: ' + unicode(self.fn_trials[-18:]),
                     u'fn_percent_reduce: ' + fn_percent_reduce,
-                    u'fn_total:', + unicode(self.fn_total_change),
-                    u'fn_reduce: ', + unicode(self.fn_reduce_change),
+                    u'fn_total:' + unicode(self.fn_total_change),
+                    u'fn_reduce: ' + unicode(self.fn_reduce_change),
                     u'ref_points: ' + unicode(self.points[0]),
                     u'adj_points: ' + unicode(self.points[1])]
         info = u'\n'.join([unicode(x) for x in data_list])
@@ -1106,6 +1132,21 @@ class SymbaductFactory(Factory):
             self.freq_cond = ((self.ref_press - 1) / self.latency_cond)
             self.freq_local = (len(self.latency_local) / sum(self.latency_local))
 
+        ref_sched = self.schedule[0]
+        adj_sched = self.schedule[1]
+        ref_sched_val = ''
+        adj_sched_val = ''
+
+        if ref_sched == 'ratio':
+            ref_sched_val = self.ratio[0]
+        elif ref_sched == 'interval':
+            ref_sched_val = self.interval[0]
+
+        if adj_sched == 'ratio':
+            adj_sched_val = self.ratio[1]
+        elif adj_sched == 'interval':
+            adj_sched_val = self.interval[1]
+
         data = dict(self.line,
                     condition=cfg.exp['save']['condition'],
                     name=self.condition_name,
@@ -1121,6 +1162,10 @@ class SymbaductFactory(Factory):
                     freq_local=self.freq_local,
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
+                    ref_sched=ref_sched,
+                    ref_sched_val=ref_sched_val,
+                    adj_sched=adj_sched,
+                    adj_sched_val=adj_sched_val,
                     player=player,
                     t_start=n_uni(t_start),
                     t_response=n_uni(self.now),
@@ -1139,6 +1184,21 @@ class SymbaductFactory(Factory):
         else:
             fn_percent_reduce = n_uni(self.fn_percent_reduce)
 
+        ref_sched = self.schedule[0]
+        adj_sched = self.schedule[1]
+        ref_sched_val = ''
+        adj_sched_val = ''
+
+        if ref_sched == 'ratio':
+            ref_sched_val = self.ratio[0]
+        elif ref_sched == 'interval':
+            ref_sched_val = self.interval[0]
+
+        if adj_sched == 'ratio':
+            adj_sched_val = self.ratio[1]
+        elif adj_sched == 'interval':
+            adj_sched_val = self.interval[1]
+
         data = dict(self.line,
                     condition=cfg.exp['save']['condition'],
                     name=self.condition_name,
@@ -1155,6 +1215,10 @@ class SymbaductFactory(Factory):
                     freq_local=self.freq_local,
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
+                    ref_sched=ref_sched,
+                    ref_sched_val=ref_sched_val,
+                    adj_sched=adj_sched,
+                    adj_sched_val=adj_sched_val,
                     fn_total=unicode(self.fn_total_change),
                     fn_reduce=unicode(self.fn_reduce_change),
                     fn_status=unicode(self.fn_status),
@@ -1177,6 +1241,21 @@ class SymbaductFactory(Factory):
             fn_percent_reduce = n_uni(self.fn_percent_reduce)
 
 
+        ref_sched = self.schedule[0]
+        adj_sched = self.schedule[1]
+        ref_sched_val = ''
+        adj_sched_val = ''
+
+        if ref_sched == 'ratio':
+            ref_sched_val = self.ratio[0]
+        elif ref_sched == 'interval':
+            ref_sched_val = self.interval[0]
+
+        if adj_sched == 'ratio':
+            adj_sched_val = self.ratio[1]
+        elif adj_sched == 'interval':
+            adj_sched_val = self.interval[1]
+
         data = dict(self.line,
                     condition=cfg.exp['save']['condition'],
                     name=self.condition_name,
@@ -1194,6 +1273,10 @@ class SymbaductFactory(Factory):
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
                     response=fn,
+                    ref_sched=ref_sched,
+                    ref_sched_val=ref_sched_val,
+                    adj_sched=adj_sched,
+                    adj_sched_val=adj_sched_val,
                     fn_total=unicode(self.fn_total_change),
                     fn_reduce=unicode(self.fn_reduce_change),
                     fn_setup=fn_setup,

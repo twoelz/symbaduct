@@ -17,6 +17,9 @@ __docformat__ = 'restructuredtext'
 __author__ = 'Thomas Anatol da Rocha Woelz'
 
 import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 import os
 import codecs
 import cPickle as pickle
@@ -370,6 +373,14 @@ class ScreenGame(Screen):
     def update_observer(self, info):
         self.ids.label_game_message.text = info
 
+    def info_instruction(self):
+        # info = self.ids.label_game_message.text
+        # print "sm.get_screen('instruction').ids.instruction_label.text: ", sm.get_screen('instruction').ids.instruction_label.text
+        # print "type(sm.get_screen('instruction').ids.instruction_label.text): ", type(sm.get_screen('instruction').ids.instruction_label.text)
+        # current = unicode(sm.get_screen('instruction').ids.instruction_label.text) + u'\n\n'
+        sm.get_screen('instruction').ids.instruction_label.text += u'\n\n' + self.ids.label_game_message.text
+        # sm.get_screen('instruction').ids.instruction_label.font_size = '12dp'
+
 class ScreenPause(Screen):
     pass
 
@@ -471,7 +482,11 @@ class ScreenManagerMain(ScreenManager):
         player_count = app.player_count
         if obs:
             print 'observer active'
-            player_count = 'Observer {}'.format(player_count)
+            gm = self.get_screen('game')
+            gm.ids.label_adjacent_room.text = ''
+            gm.ids.label_game_message.font_size = '14dp'
+            self.get_screen('instruction').ids.instruction_label.font_size = '18dp'
+            self.get_screen('end').ids.end_label.font_size = '16dp'
         else:
             print 'player active'
         game_screen = self.get_screen('game')
@@ -488,10 +503,7 @@ class ScreenManagerMain(ScreenManager):
         info = 'PAUSA\nAVISE O EXPERIMENTADOR'
 
         if obs:
-            game_message_label = self.get_screen('game').ids.label_game_message
-            game_message_label.font_size = '14dp'
-            game_message_text = game_message_label.text
-            info = u'PAUSA\n\n' +  game_message_text
+            info = u'PAUSA\n\n' + self.get_screen('game').ids.label_game_message.text
 
         self.get_screen('pause').ids.pause_label.text = info
 
@@ -514,7 +526,7 @@ class ScreenManagerMain(ScreenManager):
             end_text = u'Pesquisa encerrada:\n'
             game_message_text = self.get_screen('game').ids.label_game_message.text
             end_text += u'\n\n{}'.format(game_message_text)
-            self.get_screen('end').ids.end_label.font_size = '14dp'
+            # self.get_screen('end').ids.end_label.font_size = '12dp'
 
         self.get_screen('end').ids.end_label.text = end_text
         self.go_to('end')
@@ -644,7 +656,13 @@ class ClientAMP(amp.AMP):
 
         return {}
 
+    @cmd.InfoInstruction.responder
+    def info_instruction(self):
 
+        sm.get_screen('game').info_instruction()
+        # sm.get_screen('game').update_observer(info)
+
+        return {}
 
     def point_press(self):
         self.callRemote(cmd.PointPress)
@@ -873,19 +891,6 @@ class ClientApp(App):
         if stout:
             stout.close()
         self.stop()
-
-
-    def set_freeze(self, freeze=True):
-        if freeze:
-            self.freeze = True
-        else:
-            self.freeze = False
-
-    def update_observer(self, cycle, percent_correct, consec_correct):
-        self.observer_message = u'cycle: {}\npercent: {}\nconsec: {}'.format(cycle, percent_correct, consec_correct)
-        gm = sm.get_screen('game')
-        gm.ids.label_game_message.text = self.observer_message
-
 
     def point_press(self):
         if not obs:

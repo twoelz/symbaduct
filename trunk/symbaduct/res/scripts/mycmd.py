@@ -155,6 +155,9 @@ class UpdateObserver(amp.Command):
                  ]
     response = []
 
+class InfoInstruction(amp.Command):
+    response = []
+
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # examples
