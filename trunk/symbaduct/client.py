@@ -873,9 +873,7 @@ class ClientApp(App):
                             print_error(print_error), 0.1)
 
     def player_left(self):
-        print 'running player_left from app'
         sm.player_left()
-
 
     def session_pause(self):
         sm.session_pause()
@@ -920,8 +918,6 @@ class ClientApp(App):
                 gm.adj_overlay = 1
 
     def show_instruction(self, instruction):
-
-        print 'GOT TO SHOW INSTRUCTION ON APP'
 
         sm.get_screen('instruction').ids.instruction_label.text = instruction
         sm.go_to('instruction')

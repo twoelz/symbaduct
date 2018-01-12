@@ -384,6 +384,8 @@ class SymbaductFactory(Factory):
         self.time_previous_add_point = [0, 0]
         self.time_add_point = [0, 0]
 
+        self.override_time_previous_add_point = [0, 0]
+
         # # end variables
         # self.end = False
         # self.end_reason = ''
@@ -930,7 +932,13 @@ class SymbaductFactory(Factory):
                 add_point = True
 
         elif schedule == 'interval':
-            if self.now - self.time_previous_add_point[player] >= self.interval[player]:
+            previous_time = 0
+            if self.override_time_previous_add_point[player] != 0:
+                previous_time = self.override_time_previous_add_point[player]
+            else:
+                previous_time = self.time_previous_add_point[player]
+
+            if self.now - previous_time >= self.interval[player]:
                 add_point = True
 
         self.record_press(player)
@@ -1059,11 +1067,13 @@ class SymbaductFactory(Factory):
         end_part = False
         self.set_time()
         self.time_add_point[player] = self.now
+        self.override_time_previous_add_point[player] = 0
         self.points[player] += 1
         for p in self.get_players_and_observer():
             p.callRemote(cmd.AddPoint,
                          player=player,
                          points=self.points)
+
         if player == 0:
             self.point_counter += 1
             if self.point_counter >= cfg.cond['end after']:
@@ -1096,6 +1106,11 @@ class SymbaductFactory(Factory):
                     ext_window = self.fn_trials[-1*ext_window:]
                     if sum(ext_window) / float(len(ext_window)) <= 1.0 - cfg.cond['percentage fn extinction trials']:
                         end_part = True
+        if player == 0 and cfg.cond['ref reset target']:
+            self.reset_fn_status()
+            self.override_time_previous_add_point[1] = self.now
+            self.count_ratio_click[1] = 0
+
         if end_part:
             self.end_part()
 
