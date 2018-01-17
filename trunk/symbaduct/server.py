@@ -69,8 +69,11 @@ decimal.getcontext().rounding = decimal.ROUND_UP
 # import my scripts
 import mycmd as cmd
 from common_code import validate_config, PORT, LOCALTIME, LANG, DECIMAL_SEPARATOR, CSV_SEPARATOR
-from convert import utostr, n_uni
 
+os.environ["DECIMAL_SEPARATOR"] = DECIMAL_SEPARATOR
+os.environ["CSV_SEPARATOR"] = CSV_SEPARATOR
+
+from convert import utostr, n_uni
 
 class Container(object):
     pass
@@ -315,6 +318,10 @@ class SymbaductFactory(Factory):
         self.adj_press = 0
         self.ref_fn_click = 0
         self.adj_fn_click = 0
+
+        self.ref_fn_lock_click = 0
+        self.adj_fn_lock_click = 0
+
         self.points = [0, 0]
         self.count_ratio_click = [0, 0]
         self.conditions = text_to_list(cfg.exp['conditions']['conditions'])
@@ -338,8 +345,12 @@ class SymbaductFactory(Factory):
         self.mult_sched = []
 
         self.fn_reduce_change = 0
-        self.fn_increase_change = 0
+        self.fn_increase_change = 0  # not doing anything with it
         self.fn_total_change = 0
+
+        self.fn_reduce_lock_change = 0
+        self.fn_increase_lock_change = 0  # not doing anything with it
+        self.fn_total_lock_change = 0
 
         self.fn_percent_reduce = 'N/A'
 
@@ -358,6 +369,7 @@ class SymbaductFactory(Factory):
         self.condition_expired = False
         self.stay_in_condition = False
         self.do_not_update_observer = False
+        self.fn_lock = True
 
 
         # options: ratio, interval, (?)
@@ -441,8 +453,12 @@ class SymbaductFactory(Factory):
         self.all_press = 0
         self.ref_press = 0
         self.adj_press = 0
+
         self.ref_fn_click = 0
         self.adj_fn_click = 0
+
+        self.ref_fn_lock_click = 0
+        self.adj_fn_lock_click = 0
 
         self.freq_cond = 0
         self.freq_local = 0
@@ -450,16 +466,19 @@ class SymbaductFactory(Factory):
         self.latency_cond = 0
         self.latency_local = []
 
-
-
         self.fn_reduce_change = 0
         self.fn_increase_change = 0
         self.fn_total_change = 0
+
+        self.fn_reduce_lock_change = 0
+        self.fn_increase_lock_change = 0
+        self.fn_total_lock_change = 0
 
         self.fn_percent_reduce = 'N/A'
 
         self.fn_trial = 0
         self.fn_trials = []
+        self.fn_lock = True
 
         self.record_condition_start()
 
@@ -470,6 +489,8 @@ class SymbaductFactory(Factory):
         if cfg.cond['use instruction']:
             for p in self.get_observer():
                 p.callRemote(cmd.InfoInstruction)
+
+
 
     def check_end_experiment(self):
         '''returns True if ended'''
@@ -511,6 +532,8 @@ class SymbaductFactory(Factory):
 
         self.set_time()
         self.fn_setup = None
+        if 'fn' in cfg.cond['type']:
+            self.fn_lock = False
 
         self.schedule = ['', '']
 
@@ -579,6 +602,7 @@ class SymbaductFactory(Factory):
                 self.mult_sched.append(i)
 
     def end_part(self):
+        self.fn_lock = True
         self.count_ratio_click = [0, 0]
         part = cfg.exp['save']['part']
         if part >= cfg.cond['parts']:
@@ -767,6 +791,8 @@ class SymbaductFactory(Factory):
              'freq_local',
              'ref_fn_click',
              'adj_fn_click',
+             'ref_fn_lock_click',
+             'adj_fn_lock_click',
              'response',
              'ref_sched',
              'ref_sched_val',
@@ -774,6 +800,8 @@ class SymbaductFactory(Factory):
              'adj_sched_val',
              'fn_total',
              'fn_reduce',
+             'fn_total_locked',
+             'fn_reduce_locked',
              'fn_setup',
              'fn_direction',
              'fn_status',
@@ -805,6 +833,8 @@ class SymbaductFactory(Factory):
             freq_local='',
             ref_fn_click='',
             adj_fn_click='',
+            ref_fn_lock_click='',
+            adj_fn_lock_click='',
             response='',
             ref_sched='',
             ref_sched_val='',
@@ -812,6 +842,8 @@ class SymbaductFactory(Factory):
             adj_sched_val='',
             fn_total='',
             fn_reduce='',
+            fn_total_locked='',
+            fn_reduce_locked='',
             fn_setup='',
             fn_direction='',
             fn_status='',
@@ -842,6 +874,8 @@ class SymbaductFactory(Factory):
             d['freq_local'],
             d['ref_fn_click'],
             d['adj_fn_click'],
+            d['ref_fn_lock_click'],
+            d['adj_fn_lock_click'],
             d['response'],
             d['ref_sched'],
             d['ref_sched_val'],
@@ -849,6 +883,8 @@ class SymbaductFactory(Factory):
             d['adj_sched_val'],
             d['fn_total'],
             d['fn_reduce'],
+            d['fn_total_locked'],
+            d['fn_reduce_locked'],
             d['fn_setup'],
             d['fn_direction'],
             d['fn_status'],
@@ -993,18 +1029,31 @@ class SymbaductFactory(Factory):
                     u'ref_sched: ' + ref_sched,
                     u'adj sched: ' + adj_sched,
                     u'ref_fn_click: ' + unicode(self.ref_fn_click),
-                    u'adj_fn_click: ' + unicode(self.adj_fn_click),
+                    # u'adj_fn_click: ' + unicode(self.adj_fn_click),
+
+                    u'ref_fn_lock_click: ' + unicode(self.ref_fn_lock_click),
+                    u'adj_fn_lock_click: ' + unicode(self.adj_fn_lock_click),
+
                     u'fn_status: ' + unicode(self.fn_status),
                     u'fn_trials: ' + unicode(self.fn_trials[-18:]),
                     u'fn_percent_reduce: ' + fn_percent_reduce,
+
                     u'fn_total:' + unicode(self.fn_total_change),
                     u'fn_reduce: ' + unicode(self.fn_reduce_change),
+
+                    u'fn_total_lock:' + unicode(self.fn_total_lock_change),
+                    u'fn_reduce_lock: ' + unicode(self.fn_reduce_lock_change),
+
                     u'ref_points: ' + unicode(self.points[0]),
                     u'adj_points: ' + unicode(self.points[1])]
         info = u'\n'.join([unicode(x) for x in data_list])
         for p in self.get_observer():
             p.callRemote(cmd.UpdateObserver,
                          info=info)
+
+    # def locked_fn_click(self, player, fn):
+    #     # TODO: RECORD STUFF AND SEND TO OBSERVER
+    #     pass
 
     def fn_click(self, player, fn):
         self.set_time()
@@ -1013,47 +1062,77 @@ class SymbaductFactory(Factory):
         self.all_click += 1
         if player == 0:
             self.ref_click += 1
-            self.ref_fn_click += 1
+            if self.fn_lock:
+                self.ref_fn_lock_click +=1
+            else:
+                self.ref_fn_click += 1
         else:
             self.adj_click += 1
-            self.adj_fn_click += 1
+            self.adj_fn_lock_click += 1  # always locked
 
         fn_setup = ''
         fn_direction = ''
         new_fn_status = ''
+        record_locked = False
+
+        # if self.fn_lock:
+        #     self.locked_fn_click(player, fn)
+        #     return
 
         if player > 0:
-            pass
+            record_locked = True
+
         elif 'fn' in cfg.cond['type']:
-            self.fn_trial = 1
-            if self.fn_setup is None:
+            if self.fn_lock:
+                record_locked = True
+
+            if not self.fn_lock:
+                self.fn_trial = 1
+                if self.fn_setup is None:
+                    if fn == 'f':
+                        self.fn_setup = 1
+                    else:
+                        self.fn_setup = 0
+                fn_setup = self.fn_setup
+            else:  # locked
                 if fn == 'f':
-                    self.fn_setup = 1
+                    fn_setup = 1
                 else:
-                    self.fn_setup = 0
-            fn_setup = self.fn_setup
+                    fn_setup = 0
+
             if self.fn_invert:
                 fn_setup = 1 - fn_setup
 
             if fn == 'f' and fn_setup == 1 \
-                or fn == 'n' and fn_setup == 0:
-                self.fn_reduce_change += 1
+                or fn == 'n' and fn_setup == 0:  # lowers
                 fn_direction = 0
-                # lowers
-                # fn_status: 0 = lower, 2 = higher, 1 = default/middle
-                new_fn_status = max(self.fn_status - 1, 0)
-            else: # raises
-                self.fn_increase_change += 1
+                if not self.fn_lock:
+                    self.fn_reduce_change += 1
+                    # fn_status: 0 = lower, 2 = higher, 1 = default/middle
+                    new_fn_status = max(self.fn_status - 1, 0)
+                else:
+                    self.fn_reduce_lock_change += 1
+            else:  # raises
                 fn_direction = 1
-                new_fn_status = min(self.fn_status + 1, 2)
-            self.fn_total_change += 1
-            self.fn_percent_reduce = (float(self.fn_reduce_change) / float(self.fn_total_change)) * 100
+                if not self.fn_lock:
+                    self.fn_increase_change += 1
+                    new_fn_status = min(self.fn_status + 1, 2)
+                else:
+                    self.fn_increase_lock_change += 1
 
-            self.record_fn_click(player, fn, fn_setup, fn_direction, new_fn_status)
+            if not self.fn_lock:
+                self.fn_total_change += 1
+                self.fn_percent_reduce = (float(self.fn_reduce_change) / float(self.fn_total_change)) * 100
+                self.record_fn_click(player, fn, fn_setup, fn_direction, new_fn_status)
 
-            if new_fn_status != self.fn_status:
-                self.fn_status = new_fn_status
-                self.fix_trial_settings(fix_schedule=True)
+                if new_fn_status != self.fn_status:
+                    self.fn_status = new_fn_status
+                    self.fix_trial_settings(fix_schedule=True)
+                    self.fn_lock = True
+            else:
+                self.fn_total_lock_change += 1
+        if record_locked:
+            self.record_locked_fn_click(player, fn, fn_direction)
 
         self.update_observer()
 
@@ -1073,7 +1152,6 @@ class SymbaductFactory(Factory):
             p.callRemote(cmd.AddPoint,
                          player=player,
                          points=self.points)
-
         if player == 0:
             self.point_counter += 1
             if self.point_counter >= cfg.cond['end after']:
@@ -1117,6 +1195,7 @@ class SymbaductFactory(Factory):
     def reset_fn_status(self):
         self.fn_status = 1
         self.fix_trial_settings(fix_schedule=True)
+        self.fn_lock = False
 
     # def expire_session(self):
     #     if self.end:
@@ -1173,10 +1252,12 @@ class SymbaductFactory(Factory):
                     all_press=self.all_press,
                     ref_press=self.ref_press,
                     adj_press=self.adj_press,
-                    freq_cond=self.freq_cond,
-                    freq_local=self.freq_local,
+                    freq_cond=n_uni(self.freq_cond),
+                    freq_local=n_uni(self.freq_local),
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
+                    ref_fn_lock_click=self.ref_fn_lock_click,
+                    adj_fn_lock_click=self.adj_fn_lock_click,
                     ref_sched=ref_sched,
                     ref_sched_val=ref_sched_val,
                     adj_sched=adj_sched,
@@ -1226,16 +1307,20 @@ class SymbaductFactory(Factory):
                     all_press=self.all_press,
                     ref_press=self.ref_press,
                     adj_press=self.adj_press,
-                    freq_cond=self.freq_cond,
-                    freq_local=self.freq_local,
+                    freq_cond=n_uni(self.freq_cond),
+                    freq_local=n_uni(self.freq_local),
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
+                    ref_fn_lock_click=self.ref_fn_lock_click,
+                    adj_fn_lock_click=self.adj_fn_lock_click,
                     ref_sched=ref_sched,
                     ref_sched_val=ref_sched_val,
                     adj_sched=adj_sched,
                     adj_sched_val=adj_sched_val,
                     fn_total=unicode(self.fn_total_change),
                     fn_reduce=unicode(self.fn_reduce_change),
+                    fn_total_locked=unicode(self.fn_total_lock_change),
+                    fn_reduce_locked=unicode(self.fn_reduce_lock_change),
                     fn_status=unicode(self.fn_status),
                     fn_trials=unicode(sum(self.fn_trials)),
                     fn_percent_reduce=fn_percent_reduce,
@@ -1247,6 +1332,58 @@ class SymbaductFactory(Factory):
                     )
         self.record_line(**data)
 
+    def record_locked_fn_click(self, player, fn, fn_direction):
+        t_start = self.time_previous_fn_click[player]
+
+        ref_sched = self.schedule[0]
+        adj_sched = self.schedule[1]
+        ref_sched_val = ''
+        adj_sched_val = ''
+
+        if ref_sched == 'ratio':
+            ref_sched_val = self.ratio[0]
+        elif ref_sched == 'interval':
+            ref_sched_val = self.interval[0]
+
+        if adj_sched == 'ratio':
+            adj_sched_val = self.ratio[1]
+        elif adj_sched == 'interval':
+            adj_sched_val = self.interval[1]
+
+        data = dict(self.line,
+                    condition=cfg.exp['save']['condition'],
+                    name=self.condition_name,
+                    event='lock_fn_click',
+                    player=player,
+                    hour=self.hour,
+                    all_click=self.all_click,
+                    ref_click=self.ref_click,
+                    adj_click=self.adj_click,
+                    all_press=self.all_press,
+                    ref_press=self.ref_press,
+                    adj_press=self.adj_press,
+                    freq_cond=n_uni(self.freq_cond),
+                    freq_local=n_uni(self.freq_local),
+                    ref_fn_click=self.ref_fn_click,
+                    adj_fn_click=self.adj_fn_click,
+                    ref_fn_lock_click=self.ref_fn_lock_click,
+                    adj_fn_lock_click=self.adj_fn_lock_click,
+                    response=fn,
+                    ref_sched=ref_sched,
+                    ref_sched_val=ref_sched_val,
+                    adj_sched=adj_sched,
+                    adj_sched_val=adj_sched_val,
+                    fn_direction=fn_direction,
+                    fn_trials=unicode(sum(self.fn_trials)),
+                    t_start=n_uni(t_start),
+                    t_response=n_uni(self.now),
+                    latency=n_uni(self.now - t_start),
+                    ref_points=self.points[0],
+                    adj_points=self.points[1]
+                    )
+        self.record_line(**data)
+
+
     def record_fn_click(self, player, fn, fn_setup, fn_direction, new_fn_status):
         t_start = self.time_previous_fn_click[player]
 
@@ -1254,7 +1391,6 @@ class SymbaductFactory(Factory):
             fn_percent_reduce = unicode(self.fn_percent_reduce)
         else:
             fn_percent_reduce = n_uni(self.fn_percent_reduce)
-
 
         ref_sched = self.schedule[0]
         adj_sched = self.schedule[1]
@@ -1283,10 +1419,12 @@ class SymbaductFactory(Factory):
                     all_press=self.all_press,
                     ref_press=self.ref_press,
                     adj_press=self.adj_press,
-                    freq_cond=self.freq_cond,
-                    freq_local=self.freq_local,
+                    freq_cond=n_uni(self.freq_cond),
+                    freq_local=n_uni(self.freq_local),
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
+                    ref_fn_lock_click=self.ref_fn_lock_click,
+                    adj_fn_lock_click=self.adj_fn_lock_click,
                     response=fn,
                     ref_sched=ref_sched,
                     ref_sched_val=ref_sched_val,
@@ -1294,6 +1432,8 @@ class SymbaductFactory(Factory):
                     adj_sched_val=adj_sched_val,
                     fn_total=unicode(self.fn_total_change),
                     fn_reduce=unicode(self.fn_reduce_change),
+                    fn_total_locked=unicode(self.fn_total_lock_change),
+                    fn_reduce_locked=unicode(self.fn_reduce_lock_change),
                     fn_setup=fn_setup,
                     fn_direction=fn_direction,
                     fn_status=new_fn_status,
@@ -1365,8 +1505,12 @@ class SymbaductFactory(Factory):
                     freq_local=self.freq_local,
                     ref_fn_click=self.ref_fn_click,
                     adj_fn_click=self.adj_fn_click,
+                    ref_fn_lock_click=self.ref_fn_lock_click,
+                    adj_fn_lock_click=self.adj_fn_lock_click,
                     fn_total=unicode(self.fn_total_change),
                     fn_reduce=unicode(self.fn_reduce_change),
+                    fn_total_locked=unicode(self.fn_total_lock_change),
+                    fn_reduce_locked=unicode(self.fn_reduce_lock_change),
                     fn_trials=unicode(sum(self.fn_trials)),
                     fn_percent_reduce=fn_percent_reduce,
                     t_start=n_uni(self.time_condition),
