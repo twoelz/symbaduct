@@ -24,10 +24,19 @@ import os
 import codecs
 import cPickle as pickle
 
-import random
+# import random
 # import csv
 # import time
 # import copy
+
+# get fullscreen size
+# screeninfo is a required module available on PyPI
+from screeninfo import get_monitors
+monitor = get_monitors()[0]
+FULL_HEIGHT = monitor.height
+FULL_WIDTH = monitor.width
+del monitor
+
 
 # set local path constants
 DIR = os.path.abspath(os.path.dirname(__file__))
@@ -63,9 +72,6 @@ from common_code import LANG
 from common_code import DECIMAL_SEPARATOR
 from common_code import CSV_SEPARATOR
 
-#custom kivy extension in scripts folder
-from hoverbehavior import HoverBehavior
-
 
 # stout = StandOut('log.txt')
 
@@ -89,10 +95,6 @@ USE_FULLSCREEN = win_cfg['use fullscreen']
 
 WIN_HEIGHT = win_cfg['window']['height']
 WIN_WIDTH = win_cfg['window']['width']
-
-# TODO: REMOVE THIS IF FIGURE OUT HOW TO GET THIS
-FULL_HEIGHT = win_cfg['fullscreen']['height']
-FULL_WIDTH = win_cfg['fullscreen']['width']
 
 BACKGROUND_COLOR = tuple(win_cfg['background color'])
 FEEDBACK_BACKGROUND_COLOR = tuple(win_cfg['feedback background color'])
@@ -126,11 +128,11 @@ install_twisted_reactor()
 
 # network modules (twisted)
 from twisted.internet import reactor
-from twisted.internet import task
+# from twisted.internet import task
 from twisted.internet import defer
 from twisted.internet.protocol import _InstanceFactory
 from twisted.protocols import amp
-from twisted.python import log
+# from twisted.python import log
 
 # my scripts
 import mycmd as cmd
@@ -138,12 +140,12 @@ import mycmd as cmd
 
 from kivy.app import App
 from kivy.lang import Builder
-from kivy.uix.label import Label
-from kivy.uix.button import Button
+# from kivy.uix.label import Label
+# from kivy.uix.button import Button
 from kivy.uix.textinput import TextInput
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.relativelayout import RelativeLayout
+# from kivy.uix.boxlayout import BoxLayout
+# from kivy.uix.floatlayout import FloatLayout
+# from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.screenmanager import Screen
 from kivy.uix.screenmanager import SlideTransition
@@ -230,6 +232,7 @@ class TextInputPORT(TextInput):
         return super(TextInputPORT, self).insert_text(substring,
                                                       from_undo=from_undo)
 
+
 class ScreenConnect(Screen):
 
     # avoid garbage collection of removable rows
@@ -288,8 +291,10 @@ class ScreenConnect(Screen):
         if touch.is_double_tap:
             self.ids.label_conn_error.text = ''
 
+
 class ScreenWait(Screen):
     pass
+
 
 class ScreenGame(Screen):
     r = NumericProperty(BACKGROUND_COLOR[0])
@@ -356,7 +361,6 @@ class ScreenGame(Screen):
 
         Clock.schedule_once(lambda dt: self.clear_plus(adj=adj), 0.25)
 
-
     def clear_plus(self, adj=False):
         if adj:
             plus_label = self.ids.adj_plus
@@ -364,7 +368,6 @@ class ScreenGame(Screen):
             plus_label = self.ids.ref_plus
 
         plus_label.text = ''
-
 
     def disable_buttons(self):
         # obs here: disable all buttons (currently disabled by checking obs)
@@ -990,12 +993,6 @@ class ClientApp(App):
         sm.get_screen('game').coin_anim(adj)
 
 
-
-
-    # def set_layout(self, initial_fix=False):
-    #     sm.get_screen('game').set_layout(self.active_set, initial_fix)
-
-
 def load_cfg():
     cfg_dir = os.path.join(DIR, 'config')
     spec_dir = os.path.join(cfg_dir, 'spec')
@@ -1011,9 +1008,11 @@ def load_cfg():
                            configspec=os.path.join(spec_dir, 'spec_client.ini'))
     validate_config(cfg.client)
 
+
 def set_obs_on():
     global obs
     obs = True
+
 
 def main():
     # global sm
