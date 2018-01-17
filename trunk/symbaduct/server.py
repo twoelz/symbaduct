@@ -1184,7 +1184,7 @@ class SymbaductFactory(Factory):
                     ext_window = self.fn_trials[-1*ext_window:]
                     if sum(ext_window) / float(len(ext_window)) <= 1.0 - cfg.cond['percentage fn extinction trials']:
                         end_part = True
-        if player == 0 and cfg.cond['ref reset target']:
+        if player == 0 and cfg.cond['ref reset target'] and self.fn_status != 1:
             self.reset_fn_status()
             self.override_time_previous_add_point[1] = self.now
             self.count_ratio_click[1] = 0
