@@ -4,8 +4,8 @@ All rights reserved.
 BSD type license: check doc folder for details
 
 
-symbaduct is a psychological experiment with humans that replicates an experiment done before with pigeons
-it tries to test settings that produce symbolic aggression
+symbaduct is a psychological experiment with humans that replicates an experiment done before with pigeons.
+It tries to test settings that produce symbolic aggression
 
 Citation for the original experiment with pigeons:
 Andronis, Paul & Layng, T. V. & Goldiamond, Israel. (1997). Contingency adduction of “symbolic aggression” by pigeons. The Analysis of Verbal Behavior, 14, 5-17. The Analysis of verbal behavior. 14. 5-17.
