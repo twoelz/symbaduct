@@ -11,7 +11,7 @@ Citation for the original experiment with pigeons:
 Andronis, Paul & Layng, T. V. & Goldiamond, Israel. (1997). Contingency adduction of “symbolic aggression” by pigeons. The Analysis of Verbal Behavior, 14, 5-17.
 https://doi.org/10.1007/bf03392913
 
-The code for this experiment was requested, and the experiment was first conducted by Mariana Ribeiro Souza, as her PhD Dissertation in Experimental Psychology: Behavior Analysis, defended in 2019 @ Pontifícia Universidade Católica de São Paulo.
+Mariana Ribeiro Souza had the original idea and requested for this code. The experiment was also first conducted by Mariana Ribeiro Souza, as her PhD Dissertation in Experimental Psychology: Behavior Analysis, defended in 2019 @ Pontifícia Universidade Católica de São Paulo.
 Link to the dissertation:
 https://www.pucsp.br/sites/default/files/download/posgraduacao/programas/psicologia-experimental/mariana-ribeiro-de-souza.pdf
 
